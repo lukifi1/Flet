@@ -22,7 +22,14 @@ class QRCodeDataType(Enum):
 # ====================================
 # NLP patterns for auto detection
 
-PHONE_NUMBER_PATTERN = r"(?:\+?\d{1,3}[\s.-]?)?(?:\(?\d{2,4}\)?[\s.-]?)?\d{3,4}[\s.-]?\d{3,4}"
+# PHONE_NUMBER_PATTERN = r"\+?\d{1,4}?[-.\s]?\(?\d{1,3}?\)?[-.\s]?\d{1,4}[-.\s]?\d{1,4}[-.\s]?\d{1,9}"
+PHONE_NUMBER_PATTERN = (
+    r"\+?\d{1,4}[-.\s]?"          # optional country code with +, e.g. +1, +49, 0049 (first part)
+    r"(?:\(\d{1,3}\)|\d{1,3})"    # area code: either (415) or 415, but NO dangling '('
+    r"[-.\s]?\d{1,4}"             # first local part
+    r"[-.\s]?\d{1,4}"             # second local part
+    r"(?:[-.\s]?\d{1,9})?"        # optional extra block (for long internationals)
+)
 EMAIL_PATTERN = r"([^@\s]+@[^@\s]+\.[^@\s]+)(?:\?.*)?"
 DOMAIN_PATTERN = r"(?:[a-z0-9-]+\.)+[a-z]{2,}(?:/[^\s]*)?"
 SMS_PATTERN = r"(\+?\d{1,3}[\s.-]?)?(?:\(?\d{2,4}\)?[\s.-]?)?\d{3,4}[\s.-]?\d{3,4}(\?body=.*)?"
