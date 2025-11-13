@@ -21,7 +21,7 @@ def get_qrcode_type(text: str) -> QRCodeDataType:
             # print(f"Checking type {data_type} with pattern: {curr_pattern}")
 
             # Compile the regex pattern
-            regex_pattern = re.compile(curr_pattern)
+            regex_pattern = re.compile(curr_pattern, re.IGNORECASE)
 
             if re.fullmatch(regex_pattern, text.strip()):
                 print(f"Matched type: {data_type}")
