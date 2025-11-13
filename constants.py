@@ -27,7 +27,7 @@ EMAIL_PATTERN = r"([^@\s]+@[^@\s]+\.[^@\s]+)(?:\?.*)?"
 DOMAIN_PATTERN = r"(?:[a-z0-9-]+\.)+[a-z]{2,}(?:/[^\s]*)?"
 SMS_PATTERN = r"(\+?\d{1,3}[\s.-]?)?(?:\(?\d{2,4}\)?[\s.-]?)?\d{3,4}[\s.-]?\d{3,4}(\?body=.*)?"
 WIFI_PATTERN = r"T:(WEP|WPA|nopass);S:.*;P:.*;;"
-GEOLOCATION_PATTERN = r"^-?\d+(\.\d+)?,-?\d+(\.\d+)?"
+GEOLOCATION_PATTERN = r"-?\d+(\.\d+)?,-?\d+(\.\d+)?"
 
 # Mapping of QR code data types to their regex patterns
 TYPE_PATTERNS = {
