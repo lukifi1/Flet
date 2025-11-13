@@ -1,12 +1,24 @@
 import base64, io, flet as ft
 from PIL import Image
 import qrcode
+from constants import QRCodeDataType, TRANSPARENT_BASE64_PNG, QR_LIMITS, QR_ECC_LEVEL_COLORS, QR_ECC_LEVEL_ERROR_MESSAGES, QR_ECC_LEVEL_MESSAGES
+from utils import get_qrcode_type, prepend_uri_scheme, qrcode_select_best_ecc, qrcode_get_ecc_level, qrcode_get_data_info
 
 def make_qr_png_bytes(text: str) -> bytes:
-    qr = qrcode.QRCode(error_correction=qrcode.constants.ERROR_CORRECT_Q)
+    # TODO: logging
+    print(f"Generating QR code for text: {text}")
+
+    ecc = qrcode_select_best_ecc(text)
+
+    if ecc is None:
+        raise ValueError("Input text is too long to encode in a QR code.")
+    
+    qr = qrcode.QRCode(error_correction=ecc)
     qr.add_data(text or "")
     qr.make(fit=True)
+
     img = qr.make_image(fill_color="black", back_color="white").convert("RGB")
+
     buf = io.BytesIO()
     img.save(buf, format="PNG")
     return buf.getvalue()
@@ -14,24 +26,86 @@ def make_qr_png_bytes(text: str) -> bytes:
 def main(page: ft.Page):
     page.title = "QR Maker"
     page.padding = 16
-    inp = ft.TextField(label="Text", multiline=True, min_lines=3)
-    transparent_png = base64.b64encode(b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x06\x00\x00\x00\x1f\x15\xc4\x89\x00\x00\x00\nIDATx\x9cc``\x00\x00\x00\x02\x00\x01\xe2!\xbc3\x00\x00\x00\x00IEND\xaeB`\x82').decode()
-    img = ft.Image(src_base64=transparent_png, width=320, height=320, fit=ft.ImageFit.CONTAIN, border_radius=8)
+    
+    # ============= Title ================
+    title = ft.Text("QR Code Generator", size=22, weight=ft.FontWeight.BOLD)
+
+    # ============= Format Badge ================
+    # QR Code Data Type Badge
+    badge_type = ft.Text(QRCodeDataType.TEXT.value, color="white", size=12)
+    badge = ft.Container(
+        content=badge_type,
+        bgcolor="#0d6efd",
+        padding=ft.padding.symmetric(vertical=4, horizontal=8),
+        border_radius=12,
+    )
+    format_display = ft.Row([ft.Text("Format: "), badge])
+
+    # ============= ECC Badge ================
+    ecc_type = ft.Text("H", color="white", size=12)
+    ecc_badge = ft.Container(
+        content=ecc_type,
+        bgcolor=QR_ECC_LEVEL_COLORS[qrcode_get_ecc_level("")],
+        padding=ft.padding.symmetric(vertical=4, horizontal=8),
+        border_radius=12,
+    )
+    ecc_display = ft.Row([ft.Text("ECC: "), ecc_badge])
+
+    # ============= Input Field for QRCode ================
+    input = ft.TextField(
+        label="Text", 
+        multiline=True, 
+        min_lines=5, 
+        max_lines=None, 
+        height=150, 
+        on_change=lambda 
+        e: handle_input_change(e), 
+    )
+
+    # Button to generate QR code 
+    generate_button = ft.ElevatedButton("Generate", on_click=lambda _: gen())
+    # Default Image to display the QR code
+    img = ft.Image(src_base64=TRANSPARENT_BASE64_PNG, width=320, height=320, fit=ft.ImageFit.CONTAIN, border_radius=8)
+    # Character info display
+    char_info = ft.Text("", size=12)
+
+    def handle_input_change(e):
+        text = e.control.value or ""
+        raw = e.control.value or ""
+        length_bytes = len(raw.encode("utf-8"))
+
+        qrcode_type = get_qrcode_type(text)
+        badge_type.value = qrcode_type.value
+
+        ecc_level = qrcode_get_ecc_level(text)
+        ecc_type.value = ecc_level.value
+        ecc_badge.bgcolor = QR_ECC_LEVEL_COLORS[ecc_level]
+        char_info.value = qrcode_get_data_info(text)
+        char_info.color = QR_ECC_LEVEL_COLORS[ecc_level]
+        generate_button.disabled = length_bytes > QR_LIMITS.get(ecc_level, 0)
+        page.update()
 
     def gen():
-        text = inp.value.strip()
+        text = input.value.strip()
         if not text:
             img.visible = False
         else:
+            qrcode_type = get_qrcode_type(text)
+            # Prepend URI scheme if necessary
+            text = prepend_uri_scheme(text, qrcode_type) 
+            # Generate QR code PNG bytes
             png = make_qr_png_bytes(text)
             img.src = None
             img.src_base64 = base64.b64encode(png).decode()
             img.visible = True
         page.update()
 
-    page.add(ft.Column([ft.Text("QR Code Generator", size=22, weight=ft.FontWeight.BOLD),
-                        inp,
-                        ft.ElevatedButton("Generate", on_click=lambda _: gen()),
+    page.add(ft.Column([title,
+                        input,
+                        char_info,
+                        format_display,
+                        ecc_display,
+                        generate_button,
                         img]))
 
 if __name__ == "__main__":

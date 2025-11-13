@@ -1,0 +1,121 @@
+{
+  "email_valid": [
+    "john@example.com",
+    "USER@EXAMPLE.COM",
+    "user.name+tag@mail.co.uk",
+    "mailto:john@example.com",
+    "mailto:user@mail.co?subject=Hi",
+    "mailto:test@domain.org?body=Hello+World",
+    " mailto:test@domain.com ",
+    "MAILTO:UPPER@DOMAIN.COM"
+  ],
+  "email_invalid": [
+    "john@example",
+    "@missing-user.com",
+    "mailto:",
+    "mailto:john@example",
+    "not-an-email",
+    "mailto:not-an-email"
+  ],
+
+  "phone_valid": [
+    "+14155552671",
+    "+1 415 555 2671",
+    "+49 (0)30 123456",
+    "0049 30 123456",
+    "415.555.2671",
+    "415-555-2671",
+    "tel:+14155552671",
+    " TeL:4155552671 ",
+    "+91-98765-43210",
+    "1234567"
+  ],
+  "phone_invalid": [
+    "abc-123",
+    "(415)) 555 2671",
+    "+1(415 555 2671",
+    "tel:",
+    "++123",
+    "(123)",
+    "tel:google.com"
+  ],
+
+  "url_valid": [
+    "https://google.com",
+    "http://example.org/test?q=1",
+    "https://sub.domain.co.uk/path/to/page",
+    "google.com",
+    "example.io",
+    "sub.example.co.uk/path",
+    "my-site.dev/test",
+    "https://UPPERCASE.COM/Path",
+    " https://google.com "
+  ],
+  "url_invalid": [
+    "htp://broken.com",
+    "google",
+    "something random",
+    "://missing.com",
+    "subdomain_only",
+    "tel:google.com",
+    "mailto:example.com",
+    "WIFI:example.com"
+  ],
+
+  "geo_valid": [
+    "geo:37.7749,-122.4194",
+    "geo:-10.1234,20.9999",
+    "geo:0,0",
+    " GeO:49.1234,8.1234 ",
+    "37.7749,-122.4194"
+  ],
+  "geo_invalid": [
+    "geo:",
+    "geo:abc,xyz",
+    "geo:10.1;20.2"
+  ],
+
+  "sms_valid": [
+    "sms:+14155552671",
+    "sms:4155552671",
+    "sms:+1234567890?body=Hello",
+    " SmS:987654321?body=Hello world "
+  ],
+  "sms_invalid": [
+    "sms:",
+    "sms:+12-abcd",
+    "sms:+123?body=",
+    "sms:?body=Hello",
+    "sms:example.com"
+  ],
+
+  "wifi_valid": [
+    "WIFI:T:WPA;S:MyWiFi;P:mypassword;;",
+    "WIFI:T:WEP;S:Home;P:12345678;;",
+    "WIFI:T:nopass;S:OpenNetwork;P:;;",
+    " wifi:T:wpa;S:ssid;P:pass;; ",
+    "T:nopass;S:OpenNetwork;P:;;"
+  ],
+  "wifi_invalid": [
+    "WIFI:T:;S:SSID;P:123;;",
+    "WIFI:S:MissingType;P:pass;;",
+    "WIFI:T:WPA;S:SSID;",
+    "WIFI:T:WPA;S:ssid;P:pass;"
+  ],
+
+  "text_fallback": [
+    "hello world",
+    "some random text",
+    "test 123",
+    "just a simple string",
+    "this is not a url.com",
+    "random input 123",
+    "foo@bar",
+    "123-abc-456",
+    "example..com",
+    "geo:123456789",
+    "sms:example.com",
+    "tel:google.com",
+    "WIFI:example.com"
+  ]
+}
