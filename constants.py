@@ -1,4 +1,5 @@
 import base64
+import qrcode
 from enum import Enum
 
 # Transparent 1x1 PNG image byte data
@@ -49,3 +50,58 @@ URI_SCHEMES = {
     QRCodeDataType.GEOLOCATION : "geo:",
     QRCodeDataType.WIFI : "WIFI:",
 }
+
+class QRCodeEccLevel(Enum):
+    """Enumeration of QR code error correction levels."""
+    L = "L"  # Low
+    M = "M"  # Medium
+    Q = "Q"  # Quartile
+    H = "H"  # High
+    NA = "N/A"  # Not Applicable
+
+# QR Code capacity limits for version 40 and error correction levels
+QR_LIMITS = {
+    QRCodeEccLevel.L: 2953, # Low error correction
+    QRCodeEccLevel.M: 2331, # Medium error correction
+    QRCodeEccLevel.Q: 1663, # Quartile error correction 
+    QRCodeEccLevel.H: 1273, # Highest error correction
+}
+# Colors associated with each ECC level
+QR_ECC_LEVEL_COLORS = {
+    QRCodeEccLevel.L: "#dc3545", # Red
+    QRCodeEccLevel.M: "#fd7e14", # Orange
+    QRCodeEccLevel.Q: "#0d6efd", # Blue
+    QRCodeEccLevel.H: "#26C77C", # Green
+    QRCodeEccLevel.NA: "#6c757d", # Grey
+}
+# Descriptive messages for each ECC level
+QR_ECC_LEVEL_MESSAGES = {
+    QRCodeEccLevel.L: "Low ECC (7%)",
+    QRCodeEccLevel.M: "Medium ECC (15%)",
+    QRCodeEccLevel.Q: "Quartile ECC (25%)",
+    QRCodeEccLevel.H: "High ECC (30%)",
+    QRCodeEccLevel.NA: "N/A",
+}
+# Error correction capability messages for each ECC level
+QR_ECC_LEVEL_ERROR_MESSAGES = {
+    QRCodeEccLevel.L: "Minimal error correction, suitable for clean environments.",
+    QRCodeEccLevel.M: "Balanced error correction for general use.",
+    QRCodeEccLevel.Q: "Higher error correction for challenging conditions.",
+    QRCodeEccLevel.H: "Maximum error correction for harsh environments.",
+    QRCodeEccLevel.NA: "Too large for any QR code! ❌",
+}
+
+# Mapping of QR code ECC levels to qrcode library constants
+ECC_FUNCTION_MAP = {
+    QRCodeEccLevel.L: qrcode.constants.ERROR_CORRECT_L,
+    QRCodeEccLevel.M: qrcode.constants.ERROR_CORRECT_M,
+    QRCodeEccLevel.Q: qrcode.constants.ERROR_CORRECT_Q,
+    QRCodeEccLevel.H: qrcode.constants.ERROR_CORRECT_H,
+}
+# Order of ECC levels from highest to lowest
+ECC_ORDER = [
+    QRCodeEccLevel.H,
+    QRCodeEccLevel.Q,
+    QRCodeEccLevel.M,
+    QRCodeEccLevel.L,
+]
