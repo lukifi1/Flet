@@ -25,6 +25,7 @@ def make_qr_png_bytes(text: str) -> bytes:
 
 def main(page: ft.Page):
     page.title = "QR Maker"
+    page.scroll = "auto"
     page.padding = 16
     
     # ============= Title ================
