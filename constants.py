@@ -115,3 +115,11 @@ ECC_ORDER = [
 
 # Path to logo image asset
 LOGO_PATH="assets/logo-color.png"
+# Logo area as a ratio of QR code size in percentage
+LOGO_AREA_RATIO=0.22
+# Logo padding as a ratio of logo size
+LOGO_AREA_PADDING_RATIO=0
+# Logo corner radius as a ratio of logo size
+LOGO_AREA_RADIUS_RATIO=0.25
+# Minimum ECC level required when adding a logo
+LOGO_MIN_ECC_LEVEL=QRCodeEccLevel.H

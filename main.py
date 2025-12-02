@@ -1,27 +1,51 @@
 import base64, io, flet as ft
-from PIL import Image
+from PIL import Image, ImageDraw
 import qrcode
-from constants import QRCodeDataType, TRANSPARENT_BASE64_PNG, QR_LIMITS, QR_ECC_LEVEL_COLORS, QR_ECC_LEVEL_ERROR_MESSAGES, QR_ECC_LEVEL_MESSAGES, LOGO_PATH
+from constants import QRCodeDataType, TRANSPARENT_BASE64_PNG, QR_LIMITS, QR_ECC_LEVEL_COLORS, QR_ECC_LEVEL_ERROR_MESSAGES, QR_ECC_LEVEL_MESSAGES, LOGO_PATH, LOGO_AREA_RATIO, LOGO_AREA_PADDING_RATIO, LOGO_AREA_RADIUS_RATIO, ECC_FUNCTION_MAP, LOGO_MIN_ECC_LEVEL
 from utils import get_qrcode_type, prepend_uri_scheme, qrcode_select_best_ecc, qrcode_get_ecc_level, qrcode_get_data_info
 
-def add_logo_to_qr(qr_img: Image.Image, logo_path: str) -> Image.Image:
+ 
+def add_logo_inside_qr(qr_img: Image.Image, logo_path: str) -> Image.Image:
+    """
+    Add a logo image inside the center of the QR code image, with a dedicated room/area.
+    Args:
+        qr_img (Image.Image): The QR code image.
+        logo_path (str): The file path to the logo image.
+    """
+    qr_img = qr_img.convert("RGBA")
+
     logo = Image.open(logo_path).convert("RGBA")
 
     qr_w, qr_h = qr_img.size
 
-    # Logo size = 20% of QR
-    logo_size = int(qr_w * 0.2)
+    # Logo area = 22% of QR size (safe)
+    logo_size = int(qr_w * LOGO_AREA_RATIO)
     logo = logo.resize((logo_size, logo_size), Image.LANCZOS)
 
-    # Center position
     x = (qr_w - logo_size) // 2
     y = (qr_h - logo_size) // 2
 
-    qr_img = qr_img.convert("RGBA")
+    # 1. CUT OUT AREA IN QR (true blank space)
+    mask = Image.new("RGBA", qr_img.size, (0, 0, 0, 0))
+    draw = ImageDraw.Draw(mask)
+
+    padding = int(logo_size * LOGO_AREA_PADDING_RATIO)
+    radius = int(logo_size * LOGO_AREA_RADIUS_RATIO)
+
+    # Draw rounded rectangle (cut-out area)
+    draw.rounded_rectangle(
+        (x - padding, y - padding, x + logo_size + padding, y + logo_size + padding),
+        radius=radius,
+        fill=(255, 255, 255, 255)
+    )
+
+    qr_img = Image.alpha_composite(qr_img, mask)
+
+    # 2. PASTE LOGO INTO THE CUT-OUT AREA
     qr_img.paste(logo, (x, y), logo)
 
     return qr_img
-
+ 
 def make_qr_png_bytes(text: str, logo_path: str | None = None) -> bytes:
     # TODO: logging
     print(f"Generating QR code for text: {text}")
@@ -37,9 +61,9 @@ def make_qr_png_bytes(text: str, logo_path: str | None = None) -> bytes:
 
     img = qr.make_image(fill_color="black", back_color="white").convert("RGB")
 
-    # Add logo if provided
-    if logo_path:
-        img = add_logo_to_qr(img, logo_path)
+    # Add logo if provided and the ECC level is High
+    if logo_path and ecc == ECC_FUNCTION_MAP[LOGO_MIN_ECC_LEVEL]:
+        img = add_logo_inside_qr(img, logo_path)
 
     buf = io.BytesIO()
     img.save(buf, format="PNG")
