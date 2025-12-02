@@ -2,3 +2,6 @@ flet>=0.23
 qrcode[pil]>=7.4
 pillow>=10.0
 pytest>=7.0
+flet-cli
+flet-desktop 
+flet-web

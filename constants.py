@@ -112,3 +112,6 @@ ECC_ORDER = [
     QRCodeEccLevel.M,
     QRCodeEccLevel.L,
 ]
+
+# Path to logo image asset
+LOGO_PATH="assets/logo.png"

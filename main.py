@@ -1,10 +1,28 @@
 import base64, io, flet as ft
 from PIL import Image
 import qrcode
-from constants import QRCodeDataType, TRANSPARENT_BASE64_PNG, QR_LIMITS, QR_ECC_LEVEL_COLORS, QR_ECC_LEVEL_ERROR_MESSAGES, QR_ECC_LEVEL_MESSAGES
+from constants import QRCodeDataType, TRANSPARENT_BASE64_PNG, QR_LIMITS, QR_ECC_LEVEL_COLORS, QR_ECC_LEVEL_ERROR_MESSAGES, QR_ECC_LEVEL_MESSAGES, LOGO_PATH
 from utils import get_qrcode_type, prepend_uri_scheme, qrcode_select_best_ecc, qrcode_get_ecc_level, qrcode_get_data_info
 
-def make_qr_png_bytes(text: str) -> bytes:
+def add_logo_to_qr(qr_img: Image.Image, logo_path: str) -> Image.Image:
+    logo = Image.open(logo_path).convert("RGBA")
+
+    qr_w, qr_h = qr_img.size
+
+    # Logo size = 20% of QR
+    logo_size = int(qr_w * 0.2)
+    logo = logo.resize((logo_size, logo_size), Image.LANCZOS)
+
+    # Center position
+    x = (qr_w - logo_size) // 2
+    y = (qr_h - logo_size) // 2
+
+    qr_img = qr_img.convert("RGBA")
+    qr_img.paste(logo, (x, y), logo)
+
+    return qr_img
+
+def make_qr_png_bytes(text: str, logo_path: str | None = None) -> bytes:
     # TODO: logging
     print(f"Generating QR code for text: {text}")
 
@@ -18,6 +36,10 @@ def make_qr_png_bytes(text: str) -> bytes:
     qr.make(fit=True)
 
     img = qr.make_image(fill_color="black", back_color="white").convert("RGB")
+
+    # Add logo if provided
+    if logo_path:
+        img = add_logo_to_qr(img, logo_path)
 
     buf = io.BytesIO()
     img.save(buf, format="PNG")
@@ -95,7 +117,7 @@ def main(page: ft.Page):
             # Prepend URI scheme if necessary
             text = prepend_uri_scheme(text, qrcode_type) 
             # Generate QR code PNG bytes
-            png = make_qr_png_bytes(text)
+            png = make_qr_png_bytes(text, logo_path=LOGO_PATH)
             img.src = None
             img.src_base64 = base64.b64encode(png).decode()
             img.visible = True
