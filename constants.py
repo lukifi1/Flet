@@ -114,4 +114,4 @@ ECC_ORDER = [
 ]
 
 # Path to logo image asset
-LOGO_PATH="assets/logo.png"
+LOGO_PATH="assets/logo-color.png"
