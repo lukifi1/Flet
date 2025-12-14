@@ -9,6 +9,8 @@ from constants import (
     LOGO_AREA_RADIUS_RATIO,
     LOGO_AREA_RATIO,
     LOGO_MIN_ECC_LEVEL,
+    QR_BACK_COLOR,
+    QR_FILL_COLOR,
 )
 from utils import qrcode_select_best_ecc
 
@@ -68,7 +70,10 @@ def make_qr_png_bytes(text: str, logo_path: str | None = None) -> bytes:
     qr.add_data(text or "")
     qr.make(fit=True)
 
-    img = qr.make_image(fill_color="black", back_color="white").convert("RGB")
+    img = qr.make_image(
+        fill_color=QR_FILL_COLOR,
+        back_color=QR_BACK_COLOR,
+    ).convert("RGB")
 
     # Add logo if provided and the ECC level is High
     if logo_path and ecc == ECC_FUNCTION_MAP[LOGO_MIN_ECC_LEVEL]:
