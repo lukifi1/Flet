@@ -1,0 +1,2 @@
+-r requirements.txt
+qreader>=3.16 # sudo apt update && sudo apt install libzbar0
