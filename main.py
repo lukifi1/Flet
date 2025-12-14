@@ -19,24 +19,32 @@ from utils import (
 
 
 def main(page: ft.Page):
+    # ================== PAGE SETUP ==================
     page.title = "QR Maker"
     page.scroll = "auto"
     page.padding = 20
 
-    # ================== TITLE ==================
-    title = ft.Text(
-        "QR Code Generator",
-        size=24,
-        weight=ft.FontWeight.BOLD,
+    # ================== HEADER / NAVIGATION ==================
+    header = ft.Container(
+        content=ft.Column(
+            [
+                ft.Text(
+                    "QR Code Generator",
+                    size=26,
+                    weight=ft.FontWeight.BOLD,
+                ),
+                ft.Text(
+                    "Create scannable QR codes with live feedback",
+                    size=14,
+                    color=ft.Colors.GREY_700,
+                ),
+            ],
+            spacing=4,
+        ),
+        padding=ft.padding.only(bottom=16),
     )
 
-    subtitle = ft.Text(
-        "Generate QR codes instantly with live feedback",
-        size=14,
-        color=ft.Colors.GREY_700,
-    )
-
-    # ================== BADGES ==================
+    # ================== STATUS BADGES ==================
     badge_type = ft.Text(QRCodeDataType.TEXT.value, color="white", size=12)
     badge = ft.Container(
         content=badge_type,
@@ -63,10 +71,10 @@ def main(page: ft.Page):
         spacing=8,
     )
 
-    # ================== INPUT ==================
+    # ================== INPUT SECTION ==================
     input_field = ft.TextField(
         label="Data to encode",
-        hint_text="e.g. https://example.com",
+        hint_text="Text, URL, email, phone number …",
         multiline=True,
         min_lines=5,
         max_lines=8,
@@ -76,58 +84,75 @@ def main(page: ft.Page):
     char_info = ft.Text("", size=12)
 
     input_card = ft.Card(
+        elevation=2,
         content=ft.Container(
+            padding=16,
             content=ft.Column(
                 [
-                    ft.Text("QR Content", weight=ft.FontWeight.BOLD),
+                    ft.Text("Input", weight=ft.FontWeight.BOLD),
                     input_field,
                     char_info,
                     badges_row,
                 ],
-                spacing=10,
+                spacing=12,
             ),
-            padding=16,
         ),
-        elevation=2,
     )
 
-    # ================== QR RESULT ==================
+    # ================== RESULT SECTION ==================
     img = ft.Image(
         src=QR_NO_DATA_IMAGE,
         width=260,
         height=260,
         fit=ft.ImageFit.CONTAIN,
-        border_radius=12,
+        border_radius=14,
     )
 
     generate_button = ft.ElevatedButton(
         "Generate QR Code",
-        icon=ft.Icons.QR_CODE,
+        icon=ft.Icons.QR_CODE_2,
+        height=48,
+        style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=10)),
         on_click=lambda _: gen(),
-        width=200,
+    )
+
+    share_button = ft.ElevatedButton(
+        "Share QR Code",
+        icon=ft.Icons.SHARE,
+        height=48,
+        style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=10)),
+        # on_click=lambda _: do_share_text(),
     )
 
     result_card = ft.Card(
+        elevation=2,
         content=ft.Container(
+            padding=16,
             content=ft.Column(
                 [
+                    ft.Row(
+                        [
+                            ft.Text(
+                                "QR Code Preview",
+                                weight=ft.FontWeight.BOLD,
+                            ),
+                            share_button,
+                        ],
+                    ),
                     ft.Text("Result", weight=ft.FontWeight.BOLD),
                     img,
                     generate_button,
                 ],
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                spacing=12,
+                spacing=14,
             ),
-            padding=16,
         ),
-        elevation=2,
     )
 
     # ================== LOGIC ==================
     def handle_input_change(e):
         text = e.control.value or ""
-        raw = e.control.value or ""
-        length_bytes = len(raw.encode("utf-8"))
+        length_bytes = len(text.encode("utf-8"))
 
         qrcode_type = get_qrcode_type(text)
         badge_type.value = qrcode_type.value
@@ -157,13 +182,11 @@ def main(page: ft.Page):
         img.visible = True
         page.update()
 
-    # ================== LAYOUT ==================
+    # ================== RESPONSIVE LAYOUT ==================
     page.add(
         ft.Column(
             [
-                title,
-                subtitle,
-                ft.Divider(height=20, color="transparent"),
+                header,
                 ft.ResponsiveRow(
                     [
                         ft.Column(col=12, controls=[input_card]),
