@@ -6,7 +6,7 @@ from constants import (
     LOGO_PATH,
     QR_ECC_LEVEL_COLORS,
     QR_LIMITS,
-    TRANSPARENT_BASE64_PNG,
+    QR_NO_DATA_IMAGE,
     QRCodeDataType,
 )
 from qr_generator import make_qr_png_bytes
@@ -93,7 +93,7 @@ def main(page: ft.Page):
 
     # ================== QR RESULT ==================
     img = ft.Image(
-        src_base64=TRANSPARENT_BASE64_PNG,
+        src=QR_NO_DATA_IMAGE,
         width=260,
         height=260,
         fit=ft.ImageFit.CONTAIN,
@@ -144,16 +144,17 @@ def main(page: ft.Page):
 
     def gen():
         text = input_field.value.strip()
-        if not text:
-            img.visible = False
-        else:
-            qrcode_type = get_qrcode_type(text)
-            # Prepend URI scheme if needed
-            text = prepend_uri_scheme(text, qrcode_type)
-            # Generate QR code PNG bytes
-            png = make_qr_png_bytes(text, logo_path=LOGO_PATH)
-            img.src_base64 = base64.b64encode(png).decode()
-            img.visible = True
+        # Special case: empty input
+        # if not text:
+        #     img.visible = False
+
+        qrcode_type = get_qrcode_type(text)
+        # Prepend URI scheme if needed
+        text = prepend_uri_scheme(text, qrcode_type)
+        # Generate QR code PNG bytes
+        png = make_qr_png_bytes(text, logo_path=LOGO_PATH)
+        img.src_base64 = base64.b64encode(png).decode()
+        img.visible = True
         page.update()
 
     # ================== LAYOUT ==================
@@ -177,4 +178,4 @@ def main(page: ft.Page):
 
 
 if __name__ == "__main__":
-    ft.app(target=main)
+    ft.app(target=main, assets_dir="assets")
