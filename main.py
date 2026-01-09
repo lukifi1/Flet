@@ -21,7 +21,7 @@ from utils import (
 def main(page: ft.Page):
     # ================== PAGE SETUP ==================
     page.title = "QR Maker"
-    page.scroll = "auto"
+    page.scroll = ft.ScrollMode.AUTO
     page.padding = 20
 
     # ================== HEADER / NAVIGATION ==================
@@ -78,7 +78,7 @@ def main(page: ft.Page):
         multiline=True,
         min_lines=5,
         max_lines=8,
-        on_change=lambda e: handle_input_change(e),
+        on_change=lambda e: handle_input_change(e)
     )
 
     char_info = ft.Text("", size=12)
@@ -104,7 +104,7 @@ def main(page: ft.Page):
         src=QR_NO_DATA_IMAGE,
         width=260,
         height=260,
-        fit=ft.ImageFit.CONTAIN,
+        fit=ft.BoxFit.CONTAIN,
         border_radius=14,
     )
 
@@ -178,7 +178,7 @@ def main(page: ft.Page):
         text = prepend_uri_scheme(text, qrcode_type)
         # Generate QR code PNG bytes
         png = make_qr_png_bytes(text, logo_path=LOGO_PATH)
-        img.src_base64 = base64.b64encode(png).decode()
+        img.src = base64.b64encode(png).decode()
         img.visible = True
         page.update()
 

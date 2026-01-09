@@ -1,4 +1,4 @@
-flet>=0.28,<0.29
+flet
 qrcode[pil]>=7.4
 types-qrcode>=7.4
 pillow>=10.0
