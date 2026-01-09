@@ -1,3 +1,4 @@
+import asyncio
 import base64
 
 import flet as ft
@@ -78,7 +79,7 @@ def main(page: ft.Page):
         multiline=True,
         min_lines=5,
         max_lines=8,
-        on_change=lambda e: handle_input_change(e)
+        on_change=lambda e: handle_input_change(e),
     )
 
     char_info = ft.Text("", size=12)
@@ -116,12 +117,13 @@ def main(page: ft.Page):
         on_click=lambda _: gen(),
     )
 
+    share = ft.Share()
     share_button = ft.Button(
         "Share QR Code",
         icon=ft.Icons.SHARE,
         height=48,
         style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=10)),
-        # on_click=lambda _: do_share_text(),
+        on_click=lambda _: asyncio.create_task(do_share_qrcode()),
     )
 
     result_card = ft.Card(
@@ -182,6 +184,19 @@ def main(page: ft.Page):
         img.visible = True
         page.update()
 
+    async def do_share_qrcode():
+        file = ft.ShareFile.from_bytes(
+            base64.b64decode(img.src),
+            mime_type="image/png",
+            name="qrcode.png",
+        )
+        result = await share.share_files(
+            [file],
+            text="Sharing a file from memory",
+        )
+        # status.value = f"Share status: {result.status}"
+        # result_raw.value = f"Raw: {result.raw}"
+
     # ================== RESPONSIVE LAYOUT ==================
     page.add(
         ft.Column(
@@ -200,5 +215,5 @@ def main(page: ft.Page):
     )
 
 
-#if __name__ == "__main__":
+# if __name__ == "__main__":
 ft.run(main, assets_dir="assets")
