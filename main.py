@@ -41,7 +41,7 @@ def main(page: ft.Page):
             ],
             spacing=4,
         ),
-        padding=ft.padding.only(bottom=16),
+        padding=ft.Padding.only(bottom=16),
     )
 
     # ================== STATUS BADGES ==================
@@ -49,7 +49,7 @@ def main(page: ft.Page):
     badge = ft.Container(
         content=badge_type,
         bgcolor=ft.Colors.BLUE_600,
-        padding=ft.padding.symmetric(vertical=4, horizontal=10),
+        padding=ft.Padding.symmetric(vertical=4, horizontal=10),
         border_radius=20,
     )
 
@@ -57,7 +57,7 @@ def main(page: ft.Page):
     ecc_badge = ft.Container(
         content=ecc_type,
         bgcolor=QR_ECC_LEVEL_COLORS[qrcode_get_ecc_level("")],
-        padding=ft.padding.symmetric(vertical=4, horizontal=10),
+        padding=ft.Padding.symmetric(vertical=4, horizontal=10),
         border_radius=20,
     )
 
@@ -108,7 +108,7 @@ def main(page: ft.Page):
         border_radius=14,
     )
 
-    generate_button = ft.ElevatedButton(
+    generate_button = ft.Button(
         "Generate QR Code",
         icon=ft.Icons.QR_CODE_2,
         height=48,
@@ -116,7 +116,7 @@ def main(page: ft.Page):
         on_click=lambda _: gen(),
     )
 
-    share_button = ft.ElevatedButton(
+    share_button = ft.Button(
         "Share QR Code",
         icon=ft.Icons.SHARE,
         height=48,
@@ -200,5 +200,5 @@ def main(page: ft.Page):
     )
 
 
-if __name__ == "__main__":
-    ft.app(target=main, assets_dir="assets")
+#if __name__ == "__main__":
+ft.run(main, assets_dir="assets")
