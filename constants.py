@@ -146,3 +146,18 @@ LOGO_AREA_PADDING_RATIO = 0
 LOGO_AREA_RADIUS_RATIO = 0.25
 # Minimum ECC level required when adding a logo
 LOGO_MIN_ECC_LEVEL = QRCodeEccLevel.H
+
+# ====================================
+#       UI Design Configuration
+# ====================================
+UI_CARD_BG = "#D7E0D4"
+UI_INPUT_BG = "#5B5B5B"
+UI_TEXT_DARK = "#1F1F1F"
+UI_TEXT_LIGHT = "#FFFFFF"
+
+UI_CORNER_RADIUS = 28
+UI_INPUT_RADIUS = 18
+UI_BUTTON_RADIUS = 24
+
+UI_FONT_FAMILY = "Inter"
+UI_FONT_FILE = "fonts/Inter_24pt-SemiBold.ttf"

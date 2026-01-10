@@ -9,6 +9,15 @@ from constants import (
     QR_LIMITS,
     QR_NO_DATA_IMAGE,
     QRCodeDataType,
+    UI_BUTTON_RADIUS,
+    UI_CARD_BG,
+    UI_CORNER_RADIUS,
+    UI_FONT_FAMILY,
+    UI_FONT_FILE,
+    UI_INPUT_BG,
+    UI_INPUT_RADIUS,
+    UI_TEXT_DARK,
+    UI_TEXT_LIGHT,
 )
 from qr_generator import make_qr_png_bytes
 from utils import (
@@ -20,33 +29,25 @@ from utils import (
 
 
 def main(page: ft.Page):
-    # ================== PAGE SETUP ==================
     page.title = "QR Maker"
     page.scroll = ft.ScrollMode.AUTO
-    page.padding = 20
+    page.padding = 0
+    page.bgcolor = ft.Colors.WHITE
+    page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
 
-    # ================== HEADER / NAVIGATION ==================
-    header = ft.Container(
-        content=ft.Column(
-            [
-                ft.Text(
-                    "QR Code Generator",
-                    size=26,
-                    weight=ft.FontWeight.BOLD,
-                ),
-                ft.Text(
-                    "Create scannable QR codes with live feedback",
-                    size=14,
-                    color=ft.Colors.GREY_700,
-                ),
-            ],
-            spacing=4,
-        ),
-        padding=ft.Padding.only(bottom=16),
+    page.fonts = {
+        UI_FONT_FAMILY: UI_FONT_FILE,
+    }
+    page.theme = ft.Theme(font_family=UI_FONT_FAMILY)
+
+    title = ft.Text(
+        "QR - Code Generator",
+        size=22,
+        weight=ft.FontWeight.W_600,
+        color=UI_TEXT_DARK,
     )
 
-    # ================== STATUS BADGES ==================
-    badge_type = ft.Text(QRCodeDataType.TEXT.value, color="white", size=12)
+    badge_type = ft.Text(QRCodeDataType.TEXT.value, color=UI_TEXT_LIGHT, size=12)
     badge = ft.Container(
         content=badge_type,
         bgcolor=ft.Colors.BLUE_600,
@@ -54,7 +55,7 @@ def main(page: ft.Page):
         border_radius=20,
     )
 
-    ecc_type = ft.Text("H", color="white", size=12)
+    ecc_type = ft.Text("H", color=UI_TEXT_LIGHT, size=12)
     ecc_badge = ft.Container(
         content=ecc_type,
         bgcolor=QR_ECC_LEVEL_COLORS[qrcode_get_ecc_level("")],
@@ -64,43 +65,15 @@ def main(page: ft.Page):
 
     badges_row = ft.Row(
         [
-            ft.Text("Format:", weight=ft.FontWeight.W_500),
+            ft.Text("Format:", weight=ft.FontWeight.W_500, color=UI_TEXT_DARK),
             badge,
-            ft.Text("ECC:", weight=ft.FontWeight.W_500),
+            ft.Text("ECC:", weight=ft.FontWeight.W_500, color=UI_TEXT_DARK),
             ecc_badge,
         ],
         spacing=8,
+        alignment=ft.MainAxisAlignment.START,
     )
 
-    # ================== INPUT SECTION ==================
-    input_field = ft.TextField(
-        label="Data to encode",
-        hint_text="Text, URL, email, phone number …",
-        multiline=True,
-        min_lines=5,
-        max_lines=8,
-        on_change=lambda e: handle_input_change(e),
-    )
-
-    char_info = ft.Text("", size=12)
-
-    input_card = ft.Card(
-        elevation=2,
-        content=ft.Container(
-            padding=16,
-            content=ft.Column(
-                [
-                    ft.Text("Input", weight=ft.FontWeight.BOLD),
-                    input_field,
-                    char_info,
-                    badges_row,
-                ],
-                spacing=12,
-            ),
-        ),
-    )
-
-    # ================== RESULT SECTION ==================
     img = ft.Image(
         src=QR_NO_DATA_IMAGE,
         width=260,
@@ -109,49 +82,95 @@ def main(page: ft.Page):
         border_radius=14,
     )
 
+    input_field = ft.TextField(
+        hint_text="Eingabe",
+        multiline=True,
+        min_lines=2,
+        max_lines=4,
+        on_change=lambda e: handle_input_change(e),
+        on_focus=lambda e: handle_input_focus(e),
+        on_blur=lambda e: handle_input_blur(e),
+        bgcolor=UI_INPUT_BG,
+        color=UI_TEXT_LIGHT,
+        border_radius=UI_INPUT_RADIUS,
+        border_color=ft.Colors.TRANSPARENT,
+        focused_border_color=ft.Colors.TRANSPARENT,
+        cursor_color=UI_TEXT_LIGHT,
+        hint_style=ft.TextStyle(
+            color=ft.Colors.with_opacity(0.65, UI_TEXT_LIGHT),
+            size=12,
+            weight=ft.FontWeight.W_600,
+        ),
+        text_size=14,
+        content_padding=ft.Padding.symmetric(horizontal=16, vertical=12),
+    )
+
+    char_info = ft.Text("", size=12, color=UI_TEXT_DARK)
+
     generate_button = ft.Button(
-        "Generate QR Code",
-        icon=ft.Icons.QR_CODE_2,
-        height=48,
-        style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=10)),
+        "Generieren",
+        height=44,
+        style=ft.ButtonStyle(
+            shape=ft.RoundedRectangleBorder(radius=UI_BUTTON_RADIUS),
+        ),
         on_click=lambda _: gen(),
     )
 
     share = ft.Share()
     share_button = ft.Button(
-        "Share QR Code",
-        icon=ft.Icons.SHARE,
-        height=48,
-        style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=10)),
+        "Teilen",
+        height=44,
+        style=ft.ButtonStyle(
+            shape=ft.RoundedRectangleBorder(radius=UI_BUTTON_RADIUS),
+        ),
         on_click=lambda _: asyncio.create_task(do_share_qrcode()),
     )
 
-    result_card = ft.Card(
-        elevation=2,
-        content=ft.Container(
-            padding=16,
-            content=ft.Column(
-                [
-                    ft.Row(
-                        [
-                            ft.Text(
-                                "QR Code Preview",
-                                weight=ft.FontWeight.BOLD,
-                            ),
-                            share_button,
-                        ],
-                    ),
-                    ft.Text("Result", weight=ft.FontWeight.BOLD),
-                    img,
-                    generate_button,
-                ],
-                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                spacing=14,
-            ),
+    buttons_row = ft.Row(
+        [
+            ft.Container(expand=True, content=generate_button),
+            ft.Container(width=16),
+            ft.Container(expand=True, content=share_button),
+        ],
+        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+    )
+
+    main_card = ft.Container(
+        width=360,
+        bgcolor=UI_CARD_BG,
+        border_radius=UI_CORNER_RADIUS,
+        padding=ft.Padding.symmetric(horizontal=22, vertical=22),
+        content=ft.Column(
+            [
+                ft.Text("QR-Code:", size=14, weight=ft.FontWeight.W_600, color=UI_TEXT_DARK),
+                ft.Container(height=8),
+
+                ft.Row(
+                    [img],
+                    alignment=ft.MainAxisAlignment.CENTER,
+                ),
+
+                ft.Container(height=16),
+                input_field,
+                ft.Container(height=8),
+                char_info,
+                ft.Container(height=8),
+                badges_row,
+            ],
+            spacing=0,
         ),
     )
 
-    # ================== LOGIC ==================
+    def handle_input_focus(e):
+        if (input_field.value or "").strip() == "":
+            input_field.hint_text = "Tippen sie hier den gewünschten Text ein."
+        page.update()
+
+    def handle_input_blur(e):
+        if (input_field.value or "").strip() == "":
+            input_field.hint_text = "Eingabe"
+        page.update()
+
     def handle_input_change(e):
         text = e.control.value or ""
         length_bytes = len(text.encode("utf-8"))
@@ -170,50 +189,45 @@ def main(page: ft.Page):
         page.update()
 
     def gen():
-        text = input_field.value.strip()
-        # Special case: empty input
-        # if not text:
-        #     img.visible = False
+        text = (input_field.value or "").strip()
 
         qrcode_type = get_qrcode_type(text)
-        # Prepend URI scheme if needed
         text = prepend_uri_scheme(text, qrcode_type)
-        # Generate QR code PNG bytes
+
         png = make_qr_png_bytes(text, logo_path=LOGO_PATH)
         img.src = base64.b64encode(png).decode()
         img.visible = True
         page.update()
 
     async def do_share_qrcode():
+        if not img.src:
+            return
         file = ft.ShareFile.from_bytes(
             base64.b64decode(img.src),
             mime_type="image/png",
             name="qrcode.png",
         )
-        result = await share.share_files(
-            [file],
-            text="Sharing a file from memory",
-        )
-        # status.value = f"Share status: {result.status}"
-        # result_raw.value = f"Raw: {result.raw}"
+        await share.share_files([file], text="Sharing a file from memory")
 
-    # ================== RESPONSIVE LAYOUT ==================
     page.add(
-        ft.Column(
-            [
-                header,
-                ft.ResponsiveRow(
+        ft.SafeArea(
+            ft.Container(
+                padding=ft.Padding.symmetric(horizontal=20, vertical=18),
+                content=ft.Column(
                     [
-                        ft.Column(col=12, controls=[input_card]),
-                        ft.Column(col=12, controls=[result_card]),
+                        ft.Container(height=6),
+                        title,
+                        ft.Container(height=16),
+                        main_card,
+                        ft.Container(height=18),
+                        ft.Container(width=360, content=buttons_row),
+                        ft.Container(height=8),
                     ],
-                    spacing=20,
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                 ),
-            ],
-            spacing=10,
+            )
         )
     )
 
 
-# if __name__ == "__main__":
 ft.run(main, assets_dir="assets")
