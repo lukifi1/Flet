@@ -83,7 +83,7 @@ def main(page: ft.Page):
     )
 
     input_field = ft.TextField(
-        hint_text="Eingabe",
+        hint_text="Input",
         multiline=True,
         min_lines=2,
         max_lines=4,
@@ -108,7 +108,7 @@ def main(page: ft.Page):
     char_info = ft.Text("", size=12, color=UI_TEXT_DARK)
 
     generate_button = ft.Button(
-        "Generieren",
+        "Generate",
         height=44,
         style=ft.ButtonStyle(
             shape=ft.RoundedRectangleBorder(radius=UI_BUTTON_RADIUS),
@@ -118,7 +118,7 @@ def main(page: ft.Page):
 
     share = ft.Share()
     share_button = ft.Button(
-        "Teilen",
+        "Share",
         height=44,
         style=ft.ButtonStyle(
             shape=ft.RoundedRectangleBorder(radius=UI_BUTTON_RADIUS),
@@ -163,12 +163,12 @@ def main(page: ft.Page):
 
     def handle_input_focus(e):
         if (input_field.value or "").strip() == "":
-            input_field.hint_text = "Tippen sie hier den gewünschten Text ein."
+            input_field.hint_text = "Enter the text to encode..."
         page.update()
 
     def handle_input_blur(e):
         if (input_field.value or "").strip() == "":
-            input_field.hint_text = "Eingabe"
+            input_field.hint_text = "Enter"
         page.update()
 
     def handle_input_change(e):
