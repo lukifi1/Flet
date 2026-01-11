@@ -218,6 +218,113 @@ def main(page: ft.Page):
     # ----------------------------
     # ROUTING: Home + My QR Codes
     # ----------------------------
+    DEMO_QR_SRC = "/demo-qr.png"
+
+    preview_img = ft.Image(
+        src=DEMO_QR_SRC,
+        width=320,
+        height=320,
+        fit=ft.BoxFit.CONTAIN,
+    )
+
+    def close_preview(e=None):
+        preview_dialog.open = False
+        page.update()
+
+    preview_dialog = ft.AlertDialog(
+        modal=True,
+        bgcolor="#AAB3A8",
+        content=ft.Container(
+            padding=16,
+            content=ft.Column(
+                [
+                    ft.Row(
+                        [
+                            ft.Text(
+                                "QR Code",
+                                size=18,
+                                weight=ft.FontWeight.W_600,
+                                color=UI_TEXT_DARK,
+                            ),
+                            ft.Container(expand=True),
+                            ft.IconButton(
+                                icon=ft.Icons.CLOSE,
+                                on_click=close_preview,
+                            ),
+                        ],
+                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                    ),
+                    ft.Container(height=12),
+                    ft.Container(
+                        padding=14,
+                        bgcolor=ft.Colors.WHITE,
+                        border_radius=16,
+                        content=ft.Row(
+                            [preview_img],
+                            alignment=ft.MainAxisAlignment.CENTER,
+                        ),
+                    ),
+                ],
+                spacing=0,
+            ),
+        ),
+    )
+
+    page.overlay.append(preview_dialog)
+
+    def open_preview():
+        preview_img.src = DEMO_QR_SRC
+        preview_dialog.open = True
+        page.update()
+
+    def qr_item_card(title_text: str, description_text: str):
+        return ft.Container(
+            bgcolor=UI_CARD_BG,
+            border_radius=18,
+            padding=16,
+            content=ft.Row(
+                [
+                    ft.Column(
+                        [
+                            ft.Text(
+                                title_text,
+                                size=16,
+                                weight=ft.FontWeight.W_600,
+                                color=UI_TEXT_DARK,
+                            ),
+                            ft.Container(height=6),
+                            ft.Text(
+                                f"Beschreibung: {description_text}",
+                                size=12,
+                                color=UI_TEXT_DARK,
+                            ),
+                            ft.Container(height=14),
+                            ft.Button(
+                                "Vergrößern",
+                                height=34,
+                                style=ft.ButtonStyle(
+                                    shape=ft.RoundedRectangleBorder(radius=18),
+                                    color=UI_CARD_BG,  # Schriftfarbe: #D7E0D4
+                                ),
+                                on_click=lambda _: open_preview(),
+                            ),
+                        ],
+                        spacing=0,
+                    ),
+                    ft.Container(expand=True),
+                    ft.Image(
+                        src=DEMO_QR_SRC,
+                        width=86,
+                        height=86,
+                        fit=ft.BoxFit.CONTAIN,
+                    ),
+                ],
+                alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                vertical_alignment=ft.CrossAxisAlignment.CENTER,
+            ),
+        )
+
+
 
     def home_view():
         return ft.SafeArea(
@@ -239,15 +346,43 @@ def main(page: ft.Page):
         )
 
     def my_codes_view():
+        items = [
+            ("Wohnungsaddresse", "Längenfeldgasse 10"),
+            ("Telefonnummer", "private Telefonnummer"),
+            ("Telefonnummer", "Büro - Telefonnummer"),
+        ]
+
+        list_view = ft.ListView(
+            expand=True,
+            spacing=14,
+            padding=0,
+            controls=[qr_item_card(t, d) for (t, d) in items],
+        )
+
         return ft.SafeArea(
             ft.Container(
                 padding=ft.Padding.symmetric(horizontal=20, vertical=18),
                 content=ft.Column(
                     [
-                        ft.Text("My QR Codes", size=22, weight=ft.FontWeight.W_600, color=UI_TEXT_DARK),
-                        ft.Container(height=12),
-                        ft.Text("Coming soon…", color=ft.Colors.GREY_700),
+                        ft.Row(
+                            [
+                                ft.IconButton(
+                                    icon=ft.Icons.ARROW_BACK,
+                                    on_click=lambda _: page.go("/"),
+                                ),
+                                ft.Text(
+                                    "Meine QR-Codes:",
+                                    size=18,
+                                    weight=ft.FontWeight.W_600,
+                                    color=UI_TEXT_DARK,
+                                ),
+                            ],
+                            alignment=ft.MainAxisAlignment.START,
+                        ),
+                        ft.Divider(height=12, thickness=1, color=UI_TEXT_DARK),
+                        list_view,
                     ],
+                    spacing=10,
                 ),
             )
         )

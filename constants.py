@@ -150,7 +150,7 @@ LOGO_MIN_ECC_LEVEL = QRCodeEccLevel.H
 # ====================================
 #       UI Design Configuration
 # ====================================
-UI_CARD_BG = "#D7E0D4"
+UI_CARD_BG = "#AAB3A8"
 UI_INPUT_BG = "#5B5B5B"
 UI_TEXT_DARK = "#1F1F1F"
 UI_TEXT_LIGHT = "#FFFFFF"
@@ -162,5 +162,5 @@ UI_BUTTON_RADIUS = 24
 UI_FONT_FAMILY = "Inter"
 UI_FONT_FILE = "fonts/Inter_24pt-SemiBold.ttf"
 
-UI_NAV_BG = "#D7E0D4"
-UI_NAV_ICON = "#D7E0D4"
+UI_NAV_BG = "#AAB3A8"
+UI_NAV_ICON = "#FFFFFF"
