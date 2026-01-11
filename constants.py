@@ -161,3 +161,6 @@ UI_BUTTON_RADIUS = 24
 
 UI_FONT_FAMILY = "Inter"
 UI_FONT_FILE = "fonts/Inter_24pt-SemiBold.ttf"
+
+UI_NAV_BG = "#D7E0D4"
+UI_NAV_ICON = "#D7E0D4"

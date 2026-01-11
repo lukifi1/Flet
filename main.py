@@ -18,6 +18,8 @@ from constants import (
     UI_INPUT_RADIUS,
     UI_TEXT_DARK,
     UI_TEXT_LIGHT,
+    UI_NAV_BG,
+    UI_NAV_ICON,
 )
 from qr_generator import make_qr_png_bytes
 from utils import (
@@ -112,6 +114,7 @@ def main(page: ft.Page):
         height=44,
         style=ft.ButtonStyle(
             shape=ft.RoundedRectangleBorder(radius=UI_BUTTON_RADIUS),
+            color=UI_CARD_BG,
         ),
         on_click=lambda _: gen(),
     )
@@ -122,6 +125,7 @@ def main(page: ft.Page):
         height=44,
         style=ft.ButtonStyle(
             shape=ft.RoundedRectangleBorder(radius=UI_BUTTON_RADIUS),
+            color=UI_CARD_BG,
         ),
         on_click=lambda _: asyncio.create_task(do_share_qrcode()),
     )
@@ -209,8 +213,14 @@ def main(page: ft.Page):
         )
         await share.share_files([file], text="Sharing a file from memory")
 
-    page.add(
-        ft.SafeArea(
+
+
+    # ----------------------------
+    # ROUTING: Home + My QR Codes
+    # ----------------------------
+
+    def home_view():
+        return ft.SafeArea(
             ft.Container(
                 padding=ft.Padding.symmetric(horizontal=20, vertical=18),
                 content=ft.Column(
@@ -227,7 +237,57 @@ def main(page: ft.Page):
                 ),
             )
         )
+
+    def my_codes_view():
+        return ft.SafeArea(
+            ft.Container(
+                padding=ft.Padding.symmetric(horizontal=20, vertical=18),
+                content=ft.Column(
+                    [
+                        ft.Text("My QR Codes", size=22, weight=ft.FontWeight.W_600, color=UI_TEXT_DARK),
+                        ft.Container(height=12),
+                        ft.Text("Coming soon…", color=ft.Colors.GREY_700),
+                    ],
+                ),
+            )
+        )
+
+    def render_route():
+        page.controls.clear()
+        if page.route == "/my-codes":
+            page.controls.append(my_codes_view())
+            nav.selected_index = 1
+        else:
+            page.controls.append(home_view())
+            nav.selected_index = 0
+        page.update()
+
+    def on_nav_change(e):
+        if e.control.selected_index == 0:
+            page.go("/")
+        else:
+            page.go("/my-codes")
+
+    def on_route_change(e):
+        render_route()
+
+    nav = ft.NavigationBar(
+        bgcolor=UI_NAV_BG,
+        selected_index=0,
+        on_change=on_nav_change,
+        destinations=[
+            ft.NavigationBarDestination(icon=ft.Icons.HOME, label=""),
+            ft.NavigationBarDestination(icon=ft.Icons.QR_CODE_2, label=""),
+        ],
     )
+    nav.selected_icon_color = UI_NAV_ICON
+    nav.unselected_icon_color = UI_NAV_ICON
+    nav.indicator_color = ft.Colors.TRANSPARENT
+
+    page.navigation_bar = nav
+    page.on_route_change = on_route_change
+
+    page.go(page.route or "/")
 
 
 ft.run(main, assets_dir="assets")
