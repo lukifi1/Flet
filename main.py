@@ -84,6 +84,7 @@ def main(page: ft.Page):
         border_radius=14,
     )
 
+    # ================== INPUT SECTION ==================
     input_field = ft.TextField(
         hint_text="Input",
         multiline=True,
@@ -165,6 +166,7 @@ def main(page: ft.Page):
         ),
     )
 
+    # ================== LOGIC (INPUT + QR GENERATION) ==================
     def handle_input_focus(e):
         if (input_field.value or "").strip() == "":
             input_field.hint_text = "Enter the text to encode..."
@@ -215,9 +217,7 @@ def main(page: ft.Page):
 
 
 
-    # ----------------------------
-    # ROUTING: Home + My QR Codes
-    # ----------------------------
+    # ================== MY QR CODES ==================
     DEMO_QR_SRC = "/demo-qr.png"
 
     preview_img = ft.Image(
@@ -304,7 +304,7 @@ def main(page: ft.Page):
                                 height=34,
                                 style=ft.ButtonStyle(
                                     shape=ft.RoundedRectangleBorder(radius=18),
-                                    color=UI_CARD_BG,  # Schriftfarbe: #D7E0D4
+                                    color=UI_CARD_BG,
                                 ),
                                 on_click=lambda _: open_preview(),
                             ),
@@ -324,8 +324,7 @@ def main(page: ft.Page):
             ),
         )
 
-
-
+    # ================== ROUTING (HOME + MY CODES) ==================
     def home_view():
         return ft.SafeArea(
             ft.Container(
