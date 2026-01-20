@@ -19,7 +19,8 @@ from constants import (
     UI_TEXT_DARK,
     UI_TEXT_LIGHT,
     UI_NAV_BG,
-    UI_NAV_ICON,
+    UI_NAV_ICON_SELECTED,
+    UI_NAV_ICON_UNSELECTED,
 )
 from qr_generator import make_qr_png_bytes
 from utils import (
@@ -100,7 +101,7 @@ def main(page: ft.Page):
         focused_border_color=ft.Colors.TRANSPARENT,
         cursor_color=UI_TEXT_LIGHT,
         hint_style=ft.TextStyle(
-            color=ft.Colors.with_opacity(0.65, UI_TEXT_LIGHT),
+            color=UI_TEXT_LIGHT,
             size=12,
             weight=ft.FontWeight.W_600,
         ),
@@ -113,6 +114,7 @@ def main(page: ft.Page):
     generate_button = ft.Button(
         "Generate",
         height=44,
+        color=ft.Colors.WHITE,
         style=ft.ButtonStyle(
             shape=ft.RoundedRectangleBorder(radius=UI_BUTTON_RADIUS),
             color=UI_CARD_BG,
@@ -124,6 +126,7 @@ def main(page: ft.Page):
     share_button = ft.Button(
         "Share",
         height=44,
+        color=ft.Colors.WHITE,
         style=ft.ButtonStyle(
             shape=ft.RoundedRectangleBorder(radius=UI_BUTTON_RADIUS),
             color=UI_CARD_BG,
@@ -147,7 +150,6 @@ def main(page: ft.Page):
         padding=ft.Padding.symmetric(horizontal=22, vertical=22),
         content=ft.Column(
             [
-                ft.Text("QR-Code:", size=14, weight=ft.FontWeight.W_600, color=UI_TEXT_DARK),
                 ft.Container(height=8),
 
                 ft.Row(
@@ -302,6 +304,7 @@ def main(page: ft.Page):
                             ft.Button(
                                 "Vergrößern",
                                 height=34,
+                                color=ft.Colors.WHITE,
                                 style=ft.ButtonStyle(
                                     shape=ft.RoundedRectangleBorder(radius=18),
                                     color=UI_CARD_BG,
@@ -367,6 +370,7 @@ def main(page: ft.Page):
                             [
                                 ft.IconButton(
                                     icon=ft.Icons.ARROW_BACK,
+                                    icon_color=UI_TEXT_DARK,
                                     on_click=lambda _: page.go("/"),
                                 ),
                                 ft.Text(
@@ -386,41 +390,47 @@ def main(page: ft.Page):
             )
         )
 
+    # ================== ROUTING (HOME + MY CODES) ==================
     def render_route():
         page.controls.clear()
+
         if page.route == "/my-codes":
             page.controls.append(my_codes_view())
-            nav.selected_index = 1
+
+            home_btn.icon_color = UI_NAV_ICON_UNSELECTED
+            codes_btn.icon_color = UI_NAV_ICON_SELECTED
         else:
             page.controls.append(home_view())
-            nav.selected_index = 0
-        page.update()
 
-    def on_nav_change(e):
-        if e.control.selected_index == 0:
-            page.go("/")
-        else:
-            page.go("/my-codes")
+            home_btn.icon_color = UI_NAV_ICON_SELECTED
+            codes_btn.icon_color = UI_NAV_ICON_UNSELECTED
+
+        page.update()
 
     def on_route_change(e):
         render_route()
 
-    nav = ft.NavigationBar(
-        bgcolor=UI_NAV_BG,
-        selected_index=0,
-        on_change=on_nav_change,
-        destinations=[
-            ft.NavigationBarDestination(icon=ft.Icons.HOME, label=""),
-            ft.NavigationBarDestination(icon=ft.Icons.QR_CODE_2, label=""),
-        ],
+    home_btn = ft.IconButton(
+        icon=ft.Icons.HOME,
+        icon_color=UI_NAV_ICON_SELECTED,
+        on_click=lambda _: page.go("/"),
     )
-    nav.selected_icon_color = UI_NAV_ICON
-    nav.unselected_icon_color = UI_NAV_ICON
-    nav.indicator_color = ft.Colors.TRANSPARENT
 
-    page.navigation_bar = nav
+    codes_btn = ft.IconButton(
+        icon=ft.Icons.QR_CODE_2,
+        icon_color=UI_NAV_ICON_UNSELECTED,
+        on_click=lambda _: page.go("/my-codes"),
+    )
+
+    page.bottom_appbar = ft.BottomAppBar(
+        bgcolor=UI_NAV_BG,
+        content=ft.Row(
+            [home_btn, codes_btn],
+            alignment=ft.MainAxisAlignment.SPACE_AROUND,
+        ),
+    )
+
     page.on_route_change = on_route_change
-
     page.go(page.route or "/")
 
 
