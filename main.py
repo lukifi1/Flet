@@ -9,6 +9,18 @@ from constants import (
     QR_LIMITS,
     QR_NO_DATA_IMAGE,
     QRCodeDataType,
+    UI_BUTTON_RADIUS,
+    UI_CARD_BG,
+    UI_CORNER_RADIUS,
+    UI_FONT_FAMILY,
+    UI_FONT_FILE,
+    UI_INPUT_BG,
+    UI_INPUT_RADIUS,
+    UI_TEXT_DARK,
+    UI_TEXT_LIGHT,
+    UI_NAV_BG,
+    UI_NAV_ICON_SELECTED,
+    UI_NAV_ICON_UNSELECTED,
 )
 from qr_generator import make_qr_png_bytes
 from utils import (
@@ -20,33 +32,25 @@ from utils import (
 
 
 def main(page: ft.Page):
-    # ================== PAGE SETUP ==================
     page.title = "QR Maker"
     page.scroll = ft.ScrollMode.AUTO
-    page.padding = 20
+    page.padding = 0
+    page.bgcolor = ft.Colors.WHITE
+    page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
 
-    # ================== HEADER / NAVIGATION ==================
-    header = ft.Container(
-        content=ft.Column(
-            [
-                ft.Text(
-                    "QR Code Generator",
-                    size=26,
-                    weight=ft.FontWeight.BOLD,
-                ),
-                ft.Text(
-                    "Create scannable QR codes with live feedback",
-                    size=14,
-                    color=ft.Colors.GREY_700,
-                ),
-            ],
-            spacing=4,
-        ),
-        padding=ft.Padding.only(bottom=16),
+    page.fonts = {
+        UI_FONT_FAMILY: UI_FONT_FILE,
+    }
+    page.theme = ft.Theme(font_family=UI_FONT_FAMILY)
+
+    title = ft.Text(
+        "QR - Code Generator",
+        size=22,
+        weight=ft.FontWeight.W_600,
+        color=UI_TEXT_DARK,
     )
 
-    # ================== STATUS BADGES ==================
-    badge_type = ft.Text(QRCodeDataType.TEXT.value, color="white", size=12)
+    badge_type = ft.Text(QRCodeDataType.TEXT.value, color=UI_TEXT_LIGHT, size=12)
     badge = ft.Container(
         content=badge_type,
         bgcolor=ft.Colors.BLUE_600,
@@ -54,7 +58,7 @@ def main(page: ft.Page):
         border_radius=20,
     )
 
-    ecc_type = ft.Text("H", color="white", size=12)
+    ecc_type = ft.Text("H", color=UI_TEXT_LIGHT, size=12)
     ecc_badge = ft.Container(
         content=ecc_type,
         bgcolor=QR_ECC_LEVEL_COLORS[qrcode_get_ecc_level("")],
@@ -64,43 +68,15 @@ def main(page: ft.Page):
 
     badges_row = ft.Row(
         [
-            ft.Text("Format:", weight=ft.FontWeight.W_500),
+            ft.Text("Format:", weight=ft.FontWeight.W_500, color=UI_TEXT_DARK),
             badge,
-            ft.Text("ECC:", weight=ft.FontWeight.W_500),
+            ft.Text("ECC:", weight=ft.FontWeight.W_500, color=UI_TEXT_DARK),
             ecc_badge,
         ],
         spacing=8,
+        alignment=ft.MainAxisAlignment.START,
     )
 
-    # ================== INPUT SECTION ==================
-    input_field = ft.TextField(
-        label="Data to encode",
-        hint_text="Text, URL, email, phone number …",
-        multiline=True,
-        min_lines=5,
-        max_lines=8,
-        on_change=lambda e: handle_input_change(e),
-    )
-
-    char_info = ft.Text("", size=12)
-
-    input_card = ft.Card(
-        elevation=2,
-        content=ft.Container(
-            padding=16,
-            content=ft.Column(
-                [
-                    ft.Text("Input", weight=ft.FontWeight.BOLD),
-                    input_field,
-                    char_info,
-                    badges_row,
-                ],
-                spacing=12,
-            ),
-        ),
-    )
-
-    # ================== RESULT SECTION ==================
     img = ft.Image(
         src=QR_NO_DATA_IMAGE,
         width=260,
@@ -109,49 +85,100 @@ def main(page: ft.Page):
         border_radius=14,
     )
 
+    # ================== INPUT SECTION ==================
+    input_field = ft.TextField(
+        hint_text="Input",
+        multiline=True,
+        min_lines=2,
+        max_lines=4,
+        on_change=lambda e: handle_input_change(e),
+        on_focus=lambda e: handle_input_focus(e),
+        on_blur=lambda e: handle_input_blur(e),
+        bgcolor=UI_INPUT_BG,
+        color=UI_TEXT_LIGHT,
+        border_radius=UI_INPUT_RADIUS,
+        border_color=ft.Colors.TRANSPARENT,
+        focused_border_color=ft.Colors.TRANSPARENT,
+        cursor_color=UI_TEXT_LIGHT,
+        hint_style=ft.TextStyle(
+            color=UI_TEXT_LIGHT,
+            size=12,
+            weight=ft.FontWeight.W_600,
+        ),
+        text_size=14,
+        content_padding=ft.Padding.symmetric(horizontal=16, vertical=12),
+    )
+
+    char_info = ft.Text("", size=12, color=UI_TEXT_DARK)
+
     generate_button = ft.Button(
-        "Generate QR Code",
-        icon=ft.Icons.QR_CODE_2,
-        height=48,
-        style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=10)),
+        "Generate",
+        height=44,
+        color=ft.Colors.WHITE,
+        style=ft.ButtonStyle(
+            shape=ft.RoundedRectangleBorder(radius=UI_BUTTON_RADIUS),
+            color=UI_CARD_BG,
+        ),
         on_click=lambda _: gen(),
     )
 
     share = ft.Share()
     share_button = ft.Button(
-        "Share QR Code",
-        icon=ft.Icons.SHARE,
-        height=48,
-        style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=10)),
+        "Share",
+        height=44,
+        color=ft.Colors.WHITE,
+        style=ft.ButtonStyle(
+            shape=ft.RoundedRectangleBorder(radius=UI_BUTTON_RADIUS),
+            color=UI_CARD_BG,
+        ),
         on_click=lambda _: asyncio.create_task(do_share_qrcode()),
     )
 
-    result_card = ft.Card(
-        elevation=2,
-        content=ft.Container(
-            padding=16,
-            content=ft.Column(
-                [
-                    ft.Row(
-                        [
-                            ft.Text(
-                                "QR Code Preview",
-                                weight=ft.FontWeight.BOLD,
-                            ),
-                            share_button,
-                        ],
-                    ),
-                    ft.Text("Result", weight=ft.FontWeight.BOLD),
-                    img,
-                    generate_button,
-                ],
-                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                spacing=14,
-            ),
+    buttons_row = ft.Row(
+        [
+            ft.Container(expand=True, content=generate_button),
+            ft.Container(width=16),
+            ft.Container(expand=True, content=share_button),
+        ],
+        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+    )
+
+    main_card = ft.Container(
+        width=360,
+        bgcolor=UI_CARD_BG,
+        border_radius=UI_CORNER_RADIUS,
+        padding=ft.Padding.symmetric(horizontal=22, vertical=22),
+        content=ft.Column(
+            [
+                ft.Container(height=8),
+
+                ft.Row(
+                    [img],
+                    alignment=ft.MainAxisAlignment.CENTER,
+                ),
+
+                ft.Container(height=16),
+                input_field,
+                ft.Container(height=8),
+                char_info,
+                ft.Container(height=8),
+                badges_row,
+            ],
+            spacing=0,
         ),
     )
 
-    # ================== LOGIC ==================
+    # ================== LOGIC (INPUT + QR GENERATION) ==================
+    def handle_input_focus(e):
+        if (input_field.value or "").strip() == "":
+            input_field.hint_text = "Enter the text to encode..."
+        page.update()
+
+    def handle_input_blur(e):
+        if (input_field.value or "").strip() == "":
+            input_field.hint_text = "Enter"
+        page.update()
+
     def handle_input_change(e):
         text = e.control.value or ""
         length_bytes = len(text.encode("utf-8"))
@@ -170,50 +197,241 @@ def main(page: ft.Page):
         page.update()
 
     def gen():
-        text = input_field.value.strip()
-        # Special case: empty input
-        # if not text:
-        #     img.visible = False
+        text = (input_field.value or "").strip()
 
         qrcode_type = get_qrcode_type(text)
-        # Prepend URI scheme if needed
         text = prepend_uri_scheme(text, qrcode_type)
-        # Generate QR code PNG bytes
+
         png = make_qr_png_bytes(text, logo_path=LOGO_PATH)
         img.src = base64.b64encode(png).decode()
         img.visible = True
         page.update()
 
     async def do_share_qrcode():
+        if not img.src:
+            return
         file = ft.ShareFile.from_bytes(
             base64.b64decode(img.src),
             mime_type="image/png",
             name="qrcode.png",
         )
-        result = await share.share_files(
-            [file],
-            text="Sharing a file from memory",
-        )
-        # status.value = f"Share status: {result.status}"
-        # result_raw.value = f"Raw: {result.raw}"
+        await share.share_files([file], text="Sharing a file from memory")
 
-    # ================== RESPONSIVE LAYOUT ==================
-    page.add(
-        ft.Column(
-            [
-                header,
-                ft.ResponsiveRow(
-                    [
-                        ft.Column(col=12, controls=[input_card]),
-                        ft.Column(col=12, controls=[result_card]),
-                    ],
-                    spacing=20,
-                ),
-            ],
-            spacing=10,
-        )
+
+
+    # ================== MY QR CODES ==================
+    DEMO_QR_SRC = "/demo-qr.png"
+
+    preview_img = ft.Image(
+        src=DEMO_QR_SRC,
+        width=320,
+        height=320,
+        fit=ft.BoxFit.CONTAIN,
     )
 
+    def close_preview(e=None):
+        preview_dialog.open = False
+        page.update()
 
-# if __name__ == "__main__":
+    preview_dialog = ft.AlertDialog(
+        modal=True,
+        bgcolor="#AAB3A8",
+        content=ft.Container(
+            padding=16,
+            content=ft.Column(
+                [
+                    ft.Row(
+                        [
+                            ft.Text(
+                                "QR Code",
+                                size=18,
+                                weight=ft.FontWeight.W_600,
+                                color=UI_TEXT_DARK,
+                            ),
+                            ft.Container(expand=True),
+                            ft.IconButton(
+                                icon=ft.Icons.CLOSE,
+                                on_click=close_preview,
+                            ),
+                        ],
+                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                    ),
+                    ft.Container(height=12),
+                    ft.Container(
+                        padding=14,
+                        bgcolor=ft.Colors.WHITE,
+                        border_radius=16,
+                        content=ft.Row(
+                            [preview_img],
+                            alignment=ft.MainAxisAlignment.CENTER,
+                        ),
+                    ),
+                ],
+                spacing=0,
+            ),
+        ),
+    )
+
+    page.overlay.append(preview_dialog)
+
+    def open_preview():
+        preview_img.src = DEMO_QR_SRC
+        preview_dialog.open = True
+        page.update()
+
+    def qr_item_card(title_text: str, description_text: str):
+        return ft.Container(
+            bgcolor=UI_CARD_BG,
+            border_radius=18,
+            padding=16,
+            content=ft.Row(
+                [
+                    ft.Column(
+                        [
+                            ft.Text(
+                                title_text,
+                                size=16,
+                                weight=ft.FontWeight.W_600,
+                                color=UI_TEXT_DARK,
+                            ),
+                            ft.Container(height=6),
+                            ft.Text(
+                                f"Beschreibung: {description_text}",
+                                size=12,
+                                color=UI_TEXT_DARK,
+                            ),
+                            ft.Container(height=14),
+                            ft.Button(
+                                "Vergrößern",
+                                height=34,
+                                color=ft.Colors.WHITE,
+                                style=ft.ButtonStyle(
+                                    shape=ft.RoundedRectangleBorder(radius=18),
+                                    color=UI_CARD_BG,
+                                ),
+                                on_click=lambda _: open_preview(),
+                            ),
+                        ],
+                        spacing=0,
+                    ),
+                    ft.Container(expand=True),
+                    ft.Image(
+                        src=DEMO_QR_SRC,
+                        width=86,
+                        height=86,
+                        fit=ft.BoxFit.CONTAIN,
+                    ),
+                ],
+                alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                vertical_alignment=ft.CrossAxisAlignment.CENTER,
+            ),
+        )
+
+    # ================== ROUTING (HOME + MY CODES) ==================
+    def home_view():
+        return ft.SafeArea(
+            ft.Container(
+                padding=ft.Padding.symmetric(horizontal=20, vertical=18),
+                content=ft.Column(
+                    [
+                        ft.Container(height=6),
+                        title,
+                        ft.Container(height=16),
+                        main_card,
+                        ft.Container(height=18),
+                        ft.Container(width=360, content=buttons_row),
+                        ft.Container(height=8),
+                    ],
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                ),
+            )
+        )
+
+    def my_codes_view():
+        items = [
+            ("Wohnungsaddresse", "Längenfeldgasse 10"),
+            ("Telefonnummer", "private Telefonnummer"),
+            ("Telefonnummer", "Büro - Telefonnummer"),
+        ]
+
+        list_view = ft.ListView(
+            expand=True,
+            spacing=14,
+            padding=0,
+            controls=[qr_item_card(t, d) for (t, d) in items],
+        )
+
+        return ft.SafeArea(
+            ft.Container(
+                padding=ft.Padding.symmetric(horizontal=20, vertical=18),
+                content=ft.Column(
+                    [
+                        ft.Row(
+                            [
+                                ft.IconButton(
+                                    icon=ft.Icons.ARROW_BACK,
+                                    icon_color=UI_TEXT_DARK,
+                                    on_click=lambda _: page.go("/"),
+                                ),
+                                ft.Text(
+                                    "Meine QR-Codes:",
+                                    size=18,
+                                    weight=ft.FontWeight.W_600,
+                                    color=UI_TEXT_DARK,
+                                ),
+                            ],
+                            alignment=ft.MainAxisAlignment.START,
+                        ),
+                        ft.Divider(height=12, thickness=1, color=UI_TEXT_DARK),
+                        list_view,
+                    ],
+                    spacing=10,
+                ),
+            )
+        )
+
+    # ================== ROUTING (HOME + MY CODES) ==================
+    def render_route():
+        page.controls.clear()
+
+        if page.route == "/my-codes":
+            page.controls.append(my_codes_view())
+
+            home_btn.icon_color = UI_NAV_ICON_UNSELECTED
+            codes_btn.icon_color = UI_NAV_ICON_SELECTED
+        else:
+            page.controls.append(home_view())
+
+            home_btn.icon_color = UI_NAV_ICON_SELECTED
+            codes_btn.icon_color = UI_NAV_ICON_UNSELECTED
+
+        page.update()
+
+    def on_route_change(e):
+        render_route()
+
+    home_btn = ft.IconButton(
+        icon=ft.Icons.HOME,
+        icon_color=UI_NAV_ICON_SELECTED,
+        on_click=lambda _: page.go("/"),
+    )
+
+    codes_btn = ft.IconButton(
+        icon=ft.Icons.QR_CODE_2,
+        icon_color=UI_NAV_ICON_UNSELECTED,
+        on_click=lambda _: page.go("/my-codes"),
+    )
+
+    page.bottom_appbar = ft.BottomAppBar(
+        bgcolor=UI_NAV_BG,
+        content=ft.Row(
+            [home_btn, codes_btn],
+            alignment=ft.MainAxisAlignment.SPACE_AROUND,
+        ),
+    )
+
+    page.on_route_change = on_route_change
+    page.go(page.route or "/")
+
+
 ft.run(main, assets_dir="assets")
