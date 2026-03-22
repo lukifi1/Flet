@@ -1,6 +1,7 @@
 import base64
 from enum import Enum
 
+import flet as ft
 import qrcode
 import qrcode.constants
 
@@ -165,3 +166,5 @@ UI_FONT_FILE = "fonts/Inter_24pt-SemiBold.ttf"
 UI_NAV_BG = "#AAB3A8"
 UI_NAV_ICON_SELECTED = "#111111"
 UI_NAV_ICON_UNSELECTED = "#4A4A4A"
+
+UI_PAGE_TRANSITION_ANIMATION = ft.PageTransitionTheme.NONE

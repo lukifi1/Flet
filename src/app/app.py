@@ -2,7 +2,7 @@ import traceback
 
 import flet as ft
 
-from app.core.constants import UI_FONT_FAMILY, UI_FONT_FILE, UI_NAV_BG
+from app.core.constants import UI_FONT_FAMILY, UI_FONT_FILE, UI_NAV_BG, UI_PAGE_TRANSITION_ANIMATION
 from app.router import build_view
 
 
@@ -13,7 +13,16 @@ def main(page: ft.Page):
     page.bgcolor = ft.Colors.WHITE
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
     page.fonts = {UI_FONT_FAMILY: UI_FONT_FILE}
-    page.theme = ft.Theme(font_family=UI_FONT_FAMILY)
+    page.theme = ft.Theme(
+        font_family=UI_FONT_FAMILY,
+        page_transitions=ft.PageTransitionsTheme(
+            android=UI_PAGE_TRANSITION_ANIMATION,
+            ios=UI_PAGE_TRANSITION_ANIMATION,
+            linux=UI_PAGE_TRANSITION_ANIMATION,
+            macos=UI_PAGE_TRANSITION_ANIMATION,
+            windows=UI_PAGE_TRANSITION_ANIMATION,
+        ),
+    )
 
     nav_bar = ft.NavigationBar(
         bgcolor=UI_NAV_BG,
