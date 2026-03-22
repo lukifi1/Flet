@@ -9,6 +9,8 @@ import sys
 from pathlib import Path
 from typing import Any, Optional, cast
 
+from .config import LOGGING_SHOW_SOURCE_FILE
+
 VERBOSE_LEVEL = 5
 
 
@@ -67,6 +69,11 @@ class ColoredFormatter(logging.Formatter):
     }
     PREFIX_WIDTH = 3
     LEVEL_WIDTH = 8
+    SOURCE_WIDTH = 22
+
+    def __init__(self, show_source_file: bool = True):
+        super().__init__()
+        self.show_source_file = show_source_file
 
     def format(self, record: logging.LogRecord) -> str:
         """Format log record with colors and enhanced visible separators."""
@@ -84,11 +91,16 @@ class ColoredFormatter(logging.Formatter):
             "INFO": "[i]",
             "WARNING": "[!]",
             "ERROR": "[x]",
-            "CRITICAL": "[💀]",
+            "CRITICAL": "[x]",
         }
         prefix = prefix_map.get(levelname, "[ ]")
         padded_prefix = f"{prefix:<{self.PREFIX_WIDTH}}"
         padded_level = f"{levelname:<{self.LEVEL_WIDTH}}"
+        source_segment = ""
+        if self.show_source_file:
+            source = f"{record.filename}:{record.lineno}"
+            padded_source = f"{source:<{self.SOURCE_WIDTH}}"
+            source_segment = f" [{padded_source}]"
 
         colored_prefix = f"{color}{padded_prefix}{reset}"
         colored_levelname = f"{color}{padded_level}{reset}"
@@ -98,11 +110,11 @@ class ColoredFormatter(logging.Formatter):
             separator = f"{color}{'=' * 60}{reset}"
             message = (
                 f"{separator}\n"
-                f"[{timestamp}] {colored_prefix} {colored_levelname} - {record.getMessage()}\n"
+                f"[{timestamp}] {colored_prefix} {colored_levelname}{source_segment} - {record.getMessage()}\n"
                 f"{separator}"
             )
         else:
-            message = f"[{timestamp}] {colored_prefix} {colored_levelname} - {record.getMessage()}"
+            message = f"[{timestamp}] {colored_prefix} {colored_levelname}{source_segment} - {record.getMessage()}"
 
         return message
 
@@ -140,7 +152,7 @@ def setup_logging(
     console_handler.setLevel(
         logging.DEBUG
     )  # Capture all levels, formatter controls output
-    console_formatter = ColoredFormatter()
+    console_formatter = ColoredFormatter(show_source_file=LOGGING_SHOW_SOURCE_FILE)
     console_handler.setFormatter(console_formatter)
 
     # File handler (DEBUG and above)
