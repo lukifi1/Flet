@@ -22,13 +22,14 @@ from constants import (
     UI_NAV_ICON_SELECTED,
     UI_NAV_ICON_UNSELECTED,
 )
-from qr_generator import make_qr_png_bytes
+from qr_generator import make_qr_png_bytes, generate_and_save_qr
 from utils import (
     get_qrcode_type,
     prepend_uri_scheme,
     qrcode_get_data_info,
     qrcode_get_ecc_level,
 )
+from db import get_db
 
 
 def main(page: ft.Page):
@@ -82,7 +83,7 @@ def main(page: ft.Page):
         width=260,
         height=260,
         fit=ft.BoxFit.CONTAIN,
-        border_radius=14,
+        border_radius=14
     )
 
     # ================== INPUT SECTION ==================
@@ -122,6 +123,18 @@ def main(page: ft.Page):
         on_click=lambda _: gen(),
     )
 
+    save_button = ft.Button(
+        "Save",
+        height=44,
+        color=ft.Colors.WHITE,
+        style=ft.ButtonStyle(
+            shape=ft.RoundedRectangleBorder(radius=UI_BUTTON_RADIUS),
+            color="#2E7D32",  # Green color for save
+        ),
+        on_click=lambda _: save_qr_code(),
+        disabled=True,
+    )
+
     share = ft.Share()
     share_button = ft.Button(
         "Share",
@@ -137,7 +150,7 @@ def main(page: ft.Page):
     buttons_row = ft.Row(
         [
             ft.Container(expand=True, content=generate_button),
-            ft.Container(width=16),
+            ft.Container(expand=True, content=save_button),
             ft.Container(expand=True, content=share_button),
         ],
         alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
@@ -205,6 +218,50 @@ def main(page: ft.Page):
         png = make_qr_png_bytes(text, logo_path=LOGO_PATH)
         img.src = base64.b64encode(png).decode()
         img.visible = True
+        
+        # Enable save button when QR is generated
+        save_button.disabled = False
+        page.update()
+
+    def save_qr_code():
+        """Save the currently generated QR code to the database."""
+        if not img.src:
+            print("✗ No QR code generated yet")
+            return
+        
+        text = (input_field.value or "").strip()
+        if not text:
+            show_snackbar("Please enter text first")
+            return
+        
+        try:
+            qrcode_type = get_qrcode_type(text)
+            text = prepend_uri_scheme(text, qrcode_type)
+            
+            # Generate and save QR code
+            result = generate_and_save_qr(
+                text=text,
+                logo_path=LOGO_PATH,
+                auto_save=True,
+                metadata={"auto_generated": True},
+                tags=["generated"]
+            )
+            
+            if result["success"]:
+                qr_id = result.get("qr_id")
+                show_snackbar(f"✓ QR Code saved! (ID: {qr_id})")
+                print(f"✓ Saved QR code {qr_id}: {text[:50]}...")
+            else:
+                show_snackbar(f"✗ Error: {result.get('error', 'Unknown error')}")
+        except Exception as e:
+            print(f"✗ Error saving QR code: {e}")
+            show_snackbar(f"✗ Error: {str(e)}")
+
+    def show_snackbar(message: str):
+        """Show a snackbar notification."""
+        snackbar = ft.SnackBar(ft.Text(message))
+        page.overlay.append(snackbar)
+        snackbar.open = True
         page.update()
 
     async def do_share_qrcode():
@@ -274,59 +331,6 @@ def main(page: ft.Page):
 
     page.overlay.append(preview_dialog)
 
-    def open_preview():
-        preview_img.src = DEMO_QR_SRC
-        preview_dialog.open = True
-        page.update()
-
-    def qr_item_card(title_text: str, description_text: str):
-        return ft.Container(
-            bgcolor=UI_CARD_BG,
-            border_radius=18,
-            padding=16,
-            content=ft.Row(
-                [
-                    ft.Column(
-                        [
-                            ft.Text(
-                                title_text,
-                                size=16,
-                                weight=ft.FontWeight.W_600,
-                                color=UI_TEXT_DARK,
-                            ),
-                            ft.Container(height=6),
-                            ft.Text(
-                                f"Beschreibung: {description_text}",
-                                size=12,
-                                color=UI_TEXT_DARK,
-                            ),
-                            ft.Container(height=14),
-                            ft.Button(
-                                "Vergrößern",
-                                height=34,
-                                color=ft.Colors.WHITE,
-                                style=ft.ButtonStyle(
-                                    shape=ft.RoundedRectangleBorder(radius=18),
-                                    color=UI_CARD_BG,
-                                ),
-                                on_click=lambda _: open_preview(),
-                            ),
-                        ],
-                        spacing=0,
-                    ),
-                    ft.Container(expand=True),
-                    ft.Image(
-                        src=DEMO_QR_SRC,
-                        width=86,
-                        height=86,
-                        fit=ft.BoxFit.CONTAIN,
-                    ),
-                ],
-                alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-                vertical_alignment=ft.CrossAxisAlignment.CENTER,
-            ),
-        )
-
     # ================== ROUTING (HOME + MY CODES) ==================
     def home_view():
         return ft.SafeArea(
@@ -348,17 +352,145 @@ def main(page: ft.Page):
         )
 
     def my_codes_view():
-        items = [
-            ("Wohnungsaddresse", "Längenfeldgasse 10"),
-            ("Telefonnummer", "private Telefonnummer"),
-            ("Telefonnummer", "Büro - Telefonnummer"),
-        ]
-
+        """Display saved QR codes from database."""
+        db = get_db()
+        saved_qr_codes = db.get_all_qr_codes(limit=50)
+        
+        if not saved_qr_codes:
+            return ft.SafeArea(
+                ft.Container(
+                    padding=ft.Padding.symmetric(horizontal=20, vertical=18),
+                    content=ft.Column(
+                        [
+                            ft.Row(
+                                [
+                                    ft.IconButton(
+                                        icon=ft.Icons.ARROW_BACK,
+                                        icon_color=UI_TEXT_DARK,
+                                        on_click=lambda _: page.go("/"),
+                                    ),
+                                    ft.Text(
+                                        "My QR Codes",
+                                        size=18,
+                                        weight=ft.FontWeight.W_600,
+                                        color=UI_TEXT_DARK,
+                                    ),
+                                ],
+                                alignment=ft.MainAxisAlignment.START,
+                            ),
+                            ft.Divider(height=12, thickness=1, color=UI_TEXT_DARK),
+                            ft.Container(
+                                expand=True,
+                                content=ft.Column(
+                                    [
+                                        ft.Text(
+                                            "No QR codes saved yet",
+                                            size=16,
+                                            color=UI_TEXT_LIGHT,
+                                            text_align=ft.TextAlign.CENTER,
+                                        )
+                                    ],
+                                    alignment=ft.MainAxisAlignment.CENTER,
+                                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                                ),
+                            )
+                        ],
+                        spacing=10,
+                    ),
+                )
+            )
+        
+        def qr_item_card(qr_data: dict):
+            """Create a card for displaying a saved QR code."""
+            qr_id = qr_data.get("id")
+            data = qr_data.get("data", "")[:50]
+            qr_type = qr_data.get("qr_type", "Text")
+            created_at = qr_data.get("created_at", "")
+            
+            # Create image from binary data if available
+            qr_preview_src = ""
+            if qr_data.get("binary_data"):
+                qr_preview_src = base64.b64encode(qr_data["binary_data"]).decode()
+            
+            def show_qr_detail(qr_id):
+                """Show detail view of QR code."""
+                detail = db.get_qr_code(qr_id)
+                if detail and detail.get("binary_data"):
+                    preview_img.src = base64.b64encode(detail["binary_data"]).decode()
+                    preview_dialog.open = True
+                    page.update()
+            
+            return ft.Container(
+                bgcolor=UI_CARD_BG,
+                border_radius=18,
+                padding=16,
+                content=ft.Row(
+                    [
+                        ft.Column(
+                            [
+                                ft.Text(
+                                    f"ID: {qr_id}",
+                                    size=14,
+                                    weight=ft.FontWeight.W_600,
+                                    color=UI_TEXT_DARK,
+                                ),
+                                ft.Container(height=4),
+                                ft.Text(
+                                    f"Type: {qr_type}",
+                                    size=12,
+                                    color=UI_TEXT_LIGHT,
+                                ),
+                                ft.Container(height=4),
+                                ft.Text(
+                                    f"Data: {data}...",
+                                    size=12,
+                                    color=UI_TEXT_LIGHT,
+                                ),
+                                ft.Container(height=4),
+                                ft.Text(
+                                    f"Date: {created_at[:10] if created_at else 'N/A'}",
+                                    size=11,
+                                    color=UI_TEXT_LIGHT,
+                                ),
+                                ft.Container(height=10),
+                                ft.Button(
+                                    "View",
+                                    height=32,
+                                    width=90,
+                                    color=ft.Colors.WHITE,
+                                    style=ft.ButtonStyle(
+                                        shape=ft.RoundedRectangleBorder(radius=14),
+                                        color=UI_CARD_BG,
+                                    ),
+                                    on_click=lambda _: show_qr_detail(qr_id),
+                                ),
+                            ],
+                            spacing=0,
+                        ),
+                        ft.Container(expand=True),
+                        ft.Container(
+                            width=80,
+                            height=80,
+                            bgcolor=ft.Colors.WHITE,
+                            border_radius=12,
+                            content=ft.Image(
+                                src=qr_preview_src if qr_preview_src else QR_NO_DATA_IMAGE,
+                                width=76,
+                                height=76,
+                                fit=ft.BoxFit.CONTAIN,
+                            ) if qr_preview_src else ft.Text("N/A", size=10, color=UI_TEXT_LIGHT),
+                        ),
+                    ],
+                    alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                    vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                ),
+            )
+        
         list_view = ft.ListView(
             expand=True,
-            spacing=14,
+            spacing=12,
             padding=0,
-            controls=[qr_item_card(t, d) for (t, d) in items],
+            controls=[qr_item_card(qr) for qr in saved_qr_codes],
         )
 
         return ft.SafeArea(
@@ -374,7 +506,7 @@ def main(page: ft.Page):
                                     on_click=lambda _: page.go("/"),
                                 ),
                                 ft.Text(
-                                    "Meine QR-Codes:",
+                                    "My QR Codes",
                                     size=18,
                                     weight=ft.FontWeight.W_600,
                                     color=UI_TEXT_DARK,
@@ -389,6 +521,7 @@ def main(page: ft.Page):
                 ),
             )
         )
+
 
     # ================== ROUTING (HOME + MY CODES) ==================
     def render_route():
