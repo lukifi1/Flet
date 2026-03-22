@@ -15,7 +15,6 @@ from app.core.constants import (
 def build_error_view(route: str, message: str) -> ft.View:
     return ft.View(
         route=route,
-        bgcolor=UI_PAGE_BG,
         controls=[
             ft.SafeArea(
                 ft.Container(

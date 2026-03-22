@@ -22,7 +22,6 @@ def main(page: ft.Page):
     page.scroll = ft.ScrollMode.AUTO
     page.padding = 0
     page.bgcolor = UI_PAGE_BG
-    page.bgcolor = ft.Colors.WHITE
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
     page.fonts = {UI_FONT_FAMILY: UI_FONT_FILE}
     page.theme = ft.Theme(
