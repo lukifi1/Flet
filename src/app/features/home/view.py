@@ -7,11 +7,14 @@ from app.core.constants import (
     LOGO_PATH,
     QR_ECC_LEVEL_COLORS,
     QR_NO_DATA_IMAGE,
+    UI_BUTTON_BG,
     UI_BUTTON_RADIUS,
     UI_CARD_BG,
     UI_CORNER_RADIUS,
     UI_INPUT_BG,
     UI_INPUT_RADIUS,
+    UI_PAGE_BG,
+    UI_SUCCESS_BG,
     UI_TEXT_DARK,
     UI_TEXT_LIGHT,
     QRCodeDataType,
@@ -141,7 +144,7 @@ def home_view(page: ft.Page):
         color=ft.Colors.WHITE,
         style=ft.ButtonStyle(
             shape=ft.RoundedRectangleBorder(radius=UI_BUTTON_RADIUS),
-            color=UI_CARD_BG,
+            color=UI_BUTTON_BG,
         ),
         on_click=lambda _: gen(page),
     )
@@ -152,7 +155,7 @@ def home_view(page: ft.Page):
         color=ft.Colors.WHITE,
         style=ft.ButtonStyle(
             shape=ft.RoundedRectangleBorder(radius=UI_BUTTON_RADIUS),
-            color="#2E7D32",  # Green color for save
+            color=UI_SUCCESS_BG,
         ),
         on_click=lambda e: save_qr_code(page),
         disabled=True,
@@ -165,7 +168,7 @@ def home_view(page: ft.Page):
         color=ft.Colors.WHITE,
         style=ft.ButtonStyle(
             shape=ft.RoundedRectangleBorder(radius=UI_BUTTON_RADIUS),
-            color=UI_CARD_BG,
+            color=UI_BUTTON_BG,
         ),
         on_click=lambda _: asyncio.create_task(do_share_qrcode()),
     )
@@ -233,6 +236,7 @@ def home_view(page: ft.Page):
 
     return ft.View(
         route="/",
+        bgcolor=UI_PAGE_BG,
         controls=[
             ft.Container(
                 padding=ft.Padding.symmetric(horizontal=20, vertical=18),

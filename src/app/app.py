@@ -2,7 +2,18 @@ import traceback
 
 import flet as ft
 
-from app.core.constants import UI_FONT_FAMILY, UI_FONT_FILE, UI_NAV_BG, UI_PAGE_TRANSITION_ANIMATION
+from app.core.constants import (
+    UI_FONT_FAMILY,
+    UI_FONT_FILE,
+    UI_NAV_BG,
+    UI_NAV_ICON_SELECTED,
+    UI_NAV_ICON_UNSELECTED,
+    UI_NAV_INDICATOR_BG,
+    UI_NAV_TEXT_SELECTED,
+    UI_NAV_TEXT_UNSELECTED,
+    UI_PAGE_BG,
+    UI_PAGE_TRANSITION_ANIMATION,
+)
 from app.router import build_view
 
 
@@ -10,11 +21,24 @@ def main(page: ft.Page):
     page.title = "QR Maker"
     page.scroll = ft.ScrollMode.AUTO
     page.padding = 0
+    page.bgcolor = UI_PAGE_BG
     page.bgcolor = ft.Colors.WHITE
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
     page.fonts = {UI_FONT_FAMILY: UI_FONT_FILE}
     page.theme = ft.Theme(
         font_family=UI_FONT_FAMILY,
+        navigation_bar_theme=ft.NavigationBarTheme(
+            label_text_style={
+                ft.ControlState.SELECTED: ft.TextStyle(
+                    color=UI_NAV_TEXT_SELECTED,
+                    weight=ft.FontWeight.W_600,
+                ),
+                ft.ControlState.DEFAULT: ft.TextStyle(
+                    color=UI_NAV_TEXT_UNSELECTED,
+                    weight=ft.FontWeight.W_500,
+                ),
+            }
+        ),
         page_transitions=ft.PageTransitionsTheme(
             android=UI_PAGE_TRANSITION_ANIMATION,
             ios=UI_PAGE_TRANSITION_ANIMATION,
@@ -26,10 +50,19 @@ def main(page: ft.Page):
 
     nav_bar = ft.NavigationBar(
         bgcolor=UI_NAV_BG,
+        indicator_color=UI_NAV_INDICATOR_BG,
         selected_index=0,
         destinations=[
-            ft.NavigationBarDestination(icon=ft.Icons.HOME, label="Home"),
-            ft.NavigationBarDestination(icon=ft.Icons.QR_CODE_2, label="My Codes"),
+            ft.NavigationBarDestination(
+                icon=ft.Icon(ft.Icons.HOME_OUTLINED, color=UI_NAV_ICON_UNSELECTED),
+                selected_icon=ft.Icon(ft.Icons.HOME, color=UI_NAV_ICON_SELECTED),
+                label="Home",
+            ),
+            ft.NavigationBarDestination(
+                icon=ft.Icon(ft.Icons.QR_CODE_2_OUTLINED, color=UI_NAV_ICON_UNSELECTED),
+                selected_icon=ft.Icon(ft.Icons.QR_CODE_2, color=UI_NAV_ICON_SELECTED),
+                label="My Codes",
+            ),
         ],
     )
 

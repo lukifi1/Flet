@@ -2,7 +2,14 @@ import base64
 
 import flet as ft
 
-from app.core.constants import QR_NO_DATA_IMAGE, UI_CARD_BG, UI_TEXT_DARK, UI_TEXT_LIGHT
+from app.core.constants import (
+    QR_NO_DATA_IMAGE,
+    UI_BUTTON_BG,
+    UI_CARD_BG,
+    UI_PAGE_BG,
+    UI_TEXT_DARK,
+    UI_TEXT_MUTED,
+)
 from app.core.db import get_db
 
 
@@ -109,7 +116,7 @@ def my_codes_view(page: ft.Page) -> ft.View:
                                             ft.Text(
                                                 "No QR codes saved yet",
                                                 size=16,
-                                                color=UI_TEXT_LIGHT,
+                                                color=UI_TEXT_MUTED,
                                                 text_align=ft.TextAlign.CENTER,
                                             )
                                         ],
@@ -153,19 +160,19 @@ def my_codes_view(page: ft.Page) -> ft.View:
             ft.Text(
                 f"Type: {qr_type}",
                 size=12,
-                color=UI_TEXT_LIGHT,
+                color=UI_TEXT_MUTED,
             ),
             ft.Container(height=4),
             ft.Text(
                 f"Data: {data}...",
                 size=12,
-                color=UI_TEXT_LIGHT,
+                color=UI_TEXT_MUTED,
             ),
             ft.Container(height=4),
             ft.Text(
                 f"Date: {created_at[:10] if created_at else 'N/A'}",
                 size=11,
-                color=UI_TEXT_LIGHT,
+                color=UI_TEXT_MUTED,
             ),
             ft.Container(height=10),
             ft.Button(
@@ -175,7 +182,7 @@ def my_codes_view(page: ft.Page) -> ft.View:
                 color=ft.Colors.WHITE,
                 style=ft.ButtonStyle(
                     shape=ft.RoundedRectangleBorder(radius=14),
-                    color=UI_CARD_BG,
+                    color=UI_BUTTON_BG,
                 ),
                 on_click=(
                     (lambda _: show_qr_detail(qr_id))
@@ -201,7 +208,7 @@ def my_codes_view(page: ft.Page) -> ft.View:
                         fit=ft.BoxFit.CONTAIN,
                     )
                     if qr_preview_src
-                    else ft.Text("N/A", size=10, color=UI_TEXT_LIGHT)
+                    else ft.Text("N/A", size=10, color=UI_TEXT_MUTED)
                 ),
             ),
         ]
@@ -217,15 +224,44 @@ def my_codes_view(page: ft.Page) -> ft.View:
             ),
         )
 
-    list_view = ft.ListView(
-        expand=True,
-        spacing=12,
-        padding=0,
-        controls=[qr_item_card(qr) for qr in saved_qr_codes],
-    )
+    try:
+        list_view = ft.ListView(
+            expand=True,
+            spacing=12,
+            padding=0,
+            controls=[qr_item_card(qr) for qr in saved_qr_codes],
+        )
+    except Exception as exc:
+        return ft.View(
+            controls=[
+                ft.SafeArea(
+                    ft.Container(
+                        padding=ft.Padding.symmetric(horizontal=20, vertical=18),
+                        content=ft.Column(
+                            [
+                                ft.Text(
+                                    "My QR Codes",
+                                    size=18,
+                                    weight=ft.FontWeight.W_600,
+                                    color=UI_TEXT_DARK,
+                                ),
+                                ft.Divider(height=12, thickness=1, color=UI_TEXT_DARK),
+                                ft.Text(
+                                    f"Failed to render QR list: {exc}",
+                                    size=13,
+                                    color=UI_TEXT_DARK,
+                                ),
+                            ],
+                            spacing=10,
+                        ),
+                    )
+                )
+            ],
+        )
 
     return ft.View(
         route="/my-codes",
+        bgcolor=UI_PAGE_BG,
         controls=[
             ft.SafeArea(
                 ft.Container(
