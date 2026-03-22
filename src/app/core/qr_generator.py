@@ -4,7 +4,7 @@ from typing import Optional
 import qrcode
 from PIL import Image, ImageDraw
 
-from constants import (
+from app.core.constants import (
     ECC_FUNCTION_MAP,
     LOGO_AREA_PADDING_RATIO,
     LOGO_AREA_RADIUS_RATIO,
@@ -13,7 +13,7 @@ from constants import (
     QR_BACK_COLOR,
     QR_FILL_COLOR,
 )
-from utils import qrcode_select_best_ecc, qrcode_get_ecc_level, get_qrcode_type
+from app.core.utils import qrcode_select_best_ecc, qrcode_get_ecc_level, get_qrcode_type
 
 
 def add_logo_inside_qr(qr_img: Image.Image, logo_path: str) -> Image.Image:
@@ -105,7 +105,7 @@ def generate_and_save_qr(
     Returns:
         Dictionary with generation results including QR ID if saved
     """
-    from db import get_db
+    from app.core.db import get_db
     
     try:
         # Generate QR code
