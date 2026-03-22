@@ -6,8 +6,10 @@ from app.core.constants import (
     QR_NO_DATA_IMAGE,
     UI_BUTTON_BG,
     UI_CARD_BG,
+    UI_INPUT_BG,
     UI_PAGE_BG,
     UI_TEXT_DARK,
+    UI_TEXT_LIGHT,
     UI_TEXT_MUTED,
 )
 from app.core.db import get_db
@@ -16,7 +18,8 @@ from app.core.db import get_db
 def my_codes_view(page: ft.Page) -> ft.View:
     db = get_db()
     try:
-        saved_qr_codes = db.get_all_qr_codes(limit=50)
+        # Fetch a large page so users can scroll through all saved codes in UI.
+        saved_qr_codes = db.get_all_qr_codes(limit=10000)
     except Exception as exc:
         return ft.View(
             route="/my-codes",
@@ -228,7 +231,7 @@ def my_codes_view(page: ft.Page) -> ft.View:
         list_view = ft.ListView(
             expand=True,
             spacing=12,
-            padding=0,
+            scroll=ft.ScrollMode.AUTO,
             controls=[qr_item_card(qr) for qr in saved_qr_codes],
         )
     except Exception as exc:
@@ -259,12 +262,70 @@ def my_codes_view(page: ft.Page) -> ft.View:
             ],
         )
 
+    def build_empty_results_card() -> ft.Control:
+        return ft.Container(
+            bgcolor=UI_CARD_BG,
+            border_radius=18,
+            padding=20,
+            content=ft.Text(
+                "No QR codes match your search.",
+                size=14,
+                color=UI_TEXT_MUTED,
+                text_align=ft.TextAlign.CENTER,
+            ),
+        )
+
+    result_count = ft.Text(
+        f"{len(saved_qr_codes)} / {len(saved_qr_codes)} codes",
+        size=12,
+        color=UI_TEXT_MUTED,
+    )
+
+    def apply_search(query: str) -> None:
+        query_normalized = query.strip().lower()
+        filtered_codes = [
+            qr
+            for qr in saved_qr_codes
+            if query_normalized
+            in (
+                f"{qr.get('id', '')} {qr.get('qr_type', '')} "
+                f"{qr.get('data', '')} {qr.get('created_at', '')}"
+            ).lower()
+        ]
+
+        result_count.value = f"{len(filtered_codes)} / {len(saved_qr_codes)} codes"
+        list_view.controls = (
+            [qr_item_card(qr) for qr in filtered_codes]
+            if filtered_codes
+            else [build_empty_results_card()]
+        )
+
+    def on_search_change(query: str) -> None:
+        apply_search(query)
+        page.update()
+
+    search_field = ft.TextField(
+        hint_text="Search by ID, type, data, or date",
+        prefix_icon=ft.Icons.SEARCH,
+        bgcolor=UI_INPUT_BG,
+        color=UI_TEXT_LIGHT,
+        border_radius=14,
+        border_color=ft.Colors.TRANSPARENT,
+        focused_border_color=ft.Colors.TRANSPARENT,
+        hint_style=ft.TextStyle(color=UI_TEXT_LIGHT, size=12),
+        content_padding=ft.Padding.symmetric(horizontal=14, vertical=10),
+        on_change=lambda e: on_search_change(e.data or ""),
+    )
+
+    apply_search("")
+
     return ft.View(
         route="/my-codes",
         bgcolor=UI_PAGE_BG,
         controls=[
             ft.SafeArea(
                 ft.Container(
+                    expand=True,
                     padding=ft.Padding.symmetric(horizontal=20, vertical=18),
                     content=ft.Column(
                         [
@@ -274,12 +335,16 @@ def my_codes_view(page: ft.Page) -> ft.View:
                                 weight=ft.FontWeight.W_600,
                                 color=UI_TEXT_DARK,
                             ),
+                            search_field,
+                            result_count,
                             ft.Divider(height=12, thickness=1, color=UI_TEXT_DARK),
-                            list_view,
+                            ft.Container(expand=True, content=list_view),
                         ],
+                        expand=True,
                         spacing=10,
                     ),
-                )
+                ),
+                expand=True,
             )
         ],
     )
