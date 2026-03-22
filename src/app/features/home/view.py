@@ -4,7 +4,6 @@ import base64
 import flet as ft
 
 from app.core.constants import (
-    LOGO_PATH,
     QR_ECC_LEVEL_COLORS,
     QR_NO_DATA_IMAGE,
     UI_BUTTON_BG,
@@ -20,10 +19,16 @@ from app.core.constants import (
     QRCodeDataType,
 )
 from app.core.logger import get_logger
-from app.core.qr_generator import generate_and_save_qr, make_qr_png_bytes
-from app.core.utils import get_qrcode_type, prepend_uri_scheme, qrcode_get_ecc_level
+from app.core.utils import qrcode_get_ecc_level
 
-from .actions import handle_input_blur, handle_input_change, handle_input_focus
+from .actions import (
+    do_share_qrcode,
+    gen,
+    handle_input_blur,
+    handle_input_change,
+    handle_input_focus,
+    save_qr_code,
+)
 from .state import HomeState
 
 log = get_logger(__name__)
@@ -93,55 +98,6 @@ def home_view(page: ft.Page):
 
     char_info = ft.Text("", size=12, color=UI_TEXT_DARK)
 
-    def gen(page: ft.Page):
-        text = (input_field.value or "").strip()
-        log.debug(f"Generating QR code for input: {text[:50]}...")
-
-        qrcode_type = get_qrcode_type(text)
-        text = prepend_uri_scheme(text, qrcode_type)
-
-        png = make_qr_png_bytes(text, logo_path=LOGO_PATH)
-        img.src = base64.b64encode(png).decode()
-        img.visible = True
-
-        # Enable save button when QR is generated
-        save_button.disabled = False
-        page.update()
-
-    def save_qr_code(page: ft.Page):
-        """Save the currently generated QR code to the database."""
-        if not img.src:
-            log.warning("No QR code generated yet")
-            return
-
-        text = (input_field.value or "").strip()
-        if not text:
-            show_snackbar(page, "Please enter text first")
-            return
-
-        try:
-            qrcode_type = get_qrcode_type(text)
-            text = prepend_uri_scheme(text, qrcode_type)
-
-            # Generate and save QR code
-            result = generate_and_save_qr(
-                text=text,
-                logo_path=LOGO_PATH,
-                auto_save=True,
-                metadata={"auto_generated": True},
-                tags=["generated"],
-            )
-
-            if result["success"]:
-                qr_id = result.get("qr_id")
-                show_snackbar(page, f"QR Code saved! (ID: {qr_id})")
-                log.info(f"Saved QR code {qr_id}: {text[:50]}...")
-            else:
-                show_snackbar(page, f"Error: {result.get('error', 'Unknown error')}")
-        except Exception as e:
-            log.error(f"Error saving QR code: {e}")
-            show_snackbar(page, f"Error: {str(e)}")
-
     generate_button = ft.Button(
         "Generate",
         height=44,
@@ -150,7 +106,6 @@ def home_view(page: ft.Page):
             shape=ft.RoundedRectangleBorder(radius=UI_BUTTON_RADIUS),
             color=UI_BUTTON_BG,
         ),
-        on_click=lambda _: gen(page),
     )
 
     save_button = ft.Button(
@@ -161,7 +116,6 @@ def home_view(page: ft.Page):
             shape=ft.RoundedRectangleBorder(radius=UI_BUTTON_RADIUS),
             color=UI_SUCCESS_BG,
         ),
-        on_click=lambda e: save_qr_code(page),
         disabled=True,
     )
 
@@ -174,7 +128,6 @@ def home_view(page: ft.Page):
             shape=ft.RoundedRectangleBorder(radius=UI_BUTTON_RADIUS),
             color=UI_BUTTON_BG,
         ),
-        on_click=lambda _: asyncio.create_task(do_share_qrcode()),
     )
     buttons_row = ft.Row(
         [
@@ -207,6 +160,8 @@ def home_view(page: ft.Page):
             spacing=0,
         ),
     )
+    
+    # ================== STATE INITIALIZATION ==================
 
     state = HomeState(
         input_field=input_field,
@@ -215,29 +170,23 @@ def home_view(page: ft.Page):
         ecc_badge=ecc_badge,
         char_info=char_info,
         generate_button=generate_button,
+        img=img,
+        save_button=save_button,
+        share=share,
     )
+
+    # ================== EVENT HANDLERS ==================
 
     input_field.on_focus = lambda e: handle_input_focus(e, page, state)
     input_field.on_blur = lambda e: handle_input_blur(e, page, state)
     input_field.on_change = lambda e: handle_input_change(e, page, state)
 
-    def show_snackbar(page: ft.Page, message: str):
-        """Show a snackbar notification."""
-        snackbar = ft.SnackBar(ft.Text(message))
-        page.overlay.append(snackbar)
-        snackbar.open = True
-        page.update()
+    generate_button.on_click = lambda e: gen(page, state)
 
-    async def do_share_qrcode():
-        if not img.src:
-            return
-        file = ft.ShareFile.from_bytes(
-            base64.b64decode(img.src),
-            mime_type="image/png",
-            name="qrcode.png",
-        )
-        await share.share_files([file], text="Sharing a file from memory")
+    save_button.on_click = lambda e: save_qr_code(page, state)
+    share_button.on_click = lambda e: asyncio.create_task(do_share_qrcode(state))
 
+    # ================== VIEW ==================
     return ft.View(
         route="/",
         bgcolor=UI_PAGE_BG,

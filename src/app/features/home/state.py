@@ -13,7 +13,10 @@ class HomeState:
     ecc_badge: ft.Container
     char_info: ft.Text
     generate_button: ft.Button
-    
+    img: ft.Image  # Holds the generated QR code image
+    save_button: ft.Button
+    share: ft.Share  # For sharing the generated QR code
+
     qr_code_data: str = ""
 
     qr_code_type: str = "Unknown"

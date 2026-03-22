@@ -1,9 +1,28 @@
+import base64
+
 import flet as ft
 
-from app.core.constants import QR_ECC_LEVEL_COLORS, QR_LIMITS
-from app.core.utils import get_qrcode_type, qrcode_get_data_info, qrcode_get_ecc_level
+from app.core.constants import LOGO_PATH, QR_ECC_LEVEL_COLORS, QR_LIMITS
+from app.core.logger import get_logger
+from app.core.qr_generator import generate_and_save_qr, make_qr_png_bytes
+from app.core.utils import (
+    get_qrcode_type,
+    prepend_uri_scheme,
+    qrcode_get_data_info,
+    qrcode_get_ecc_level,
+)
 
 from .state import HomeState
+
+log = get_logger(__name__)
+
+
+def show_snackbar(page: ft.Page, message: str):
+    """Show a snackbar notification."""
+    snackbar = ft.SnackBar(ft.Text(message))
+    page.overlay.append(snackbar)
+    snackbar.open = True
+    page.update()
 
 
 # ================== LOGIC (INPUT + QR GENERATION) ==================
@@ -36,3 +55,65 @@ def handle_input_change(e: ft.Event[ft.TextField], page: ft.Page, state: HomeSta
 
     state.generate_button.disabled = length_bytes > QR_LIMITS.get(ecc_level, 0)
     page.update()
+
+
+def gen(page: ft.Page, state: HomeState):
+    text = (state.input_field.value or "").strip()
+    log.debug(f"Generating QR code for input: {text[:50]}...")
+
+    qrcode_type = get_qrcode_type(text)
+    text = prepend_uri_scheme(text, qrcode_type)
+
+    png = make_qr_png_bytes(text, logo_path=LOGO_PATH)
+    state.img.src = base64.b64encode(png).decode()
+    state.img.visible = True
+
+    # Enable save button when QR is generated
+    state.save_button.disabled = False
+    page.update()
+
+
+def save_qr_code(page: ft.Page, state: HomeState):
+    """Save the currently generated QR code to the database."""
+    if not state.img.src:
+        log.warning("No QR code generated yet")
+        return
+
+    text = (state.input_field.value or "").strip()
+    if not text:
+        show_snackbar(page, "Please enter text first")
+        return
+
+    try:
+        qrcode_type = get_qrcode_type(text)
+        text = prepend_uri_scheme(text, qrcode_type)
+
+        # Generate and save QR code
+        result = generate_and_save_qr(
+            text=text,
+            logo_path=LOGO_PATH,
+            auto_save=True,
+            metadata={"auto_generated": True},
+            tags=["generated"],
+        )
+
+        if result["success"]:
+            qr_id = result.get("qr_id")
+            show_snackbar(page, f"QR Code saved! (ID: {qr_id})")
+            log.info(f"Saved QR code {qr_id}: {text[:50]}...")
+        else:
+            show_snackbar(page, f"Error: {result.get('error', 'Unknown error')}")
+    except Exception as e:
+        log.error(f"Error saving QR code: {e}")
+        show_snackbar(page, f"Error: {str(e)}")
+
+
+async def do_share_qrcode(state : HomeState):
+    if not state.img.src:
+        return
+    file = ft.ShareFile.from_bytes(
+        base64.b64decode(state.img.src),
+        mime_type="image/png",
+        name="qrcode.png",
+    )
+    await state.share.share_files([file], text="Sharing a file from memory")
