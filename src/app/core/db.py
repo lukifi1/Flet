@@ -4,14 +4,34 @@ Handles database initialization, schema creation, and QR code persistence.
 """
 
 import json
+import os
 import sqlite3
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 
+def _resolve_default_db_path() -> Path:
+    """Resolve a writable default database path.
+
+    Priority:
+    1) Explicit path via `QRCODE_DB_PATH`
+    2) Project-level `data/qrcodes.db`
+    3) Module-local fallback `core/data/qrcodes.db`
+    """
+    env_path = os.getenv("QRCODE_DB_PATH")
+    if env_path:
+        return Path(env_path).expanduser().resolve()
+
+    project_root = Path(__file__).resolve().parents[3]
+    project_db = project_root / "data" / "qrcodes.db"
+    if project_db.parent.exists() or project_root.exists():
+        return project_db
+
+    return Path(__file__).resolve().parent / "data" / "qrcodes.db"
+
+
 # Database file path
-DB_DIR = Path(__file__).parent / "data"
-DB_PATH = DB_DIR / "qrcodes.db"
+DB_PATH = _resolve_default_db_path()
 
 
 class QRCodeDatabase:
@@ -24,8 +44,11 @@ class QRCodeDatabase:
         Args:
             db_path: Path to SQLite database file. Defaults to ./data/qrcodes.db
         """
-        self.db_path = db_path or DB_PATH
+        self.db_path = (db_path or DB_PATH).expanduser().resolve()
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
+        # Ensure file existence is explicit; sqlite will still open/create as needed.
+        if not self.db_path.exists():
+            self.db_path.touch()
         self._init_db()
 
     def _get_connection(self) -> sqlite3.Connection:
@@ -219,6 +242,7 @@ class QRCodeDatabase:
 
 # Singleton instance
 _db_instance: Optional[QRCodeDatabase] = None
+_db_init_error: Optional[Exception] = None
 
 
 def get_db() -> QRCodeDatabase:
@@ -228,7 +252,16 @@ def get_db() -> QRCodeDatabase:
     Returns:
         QRCodeDatabase instance
     """
-    global _db_instance
+    global _db_instance, _db_init_error
+    if _db_init_error is not None:
+        raise RuntimeError(
+            f"Database initialization previously failed: {_db_init_error}"
+        )
+
     if _db_instance is None:
-        _db_instance = QRCodeDatabase()
+        try:
+            _db_instance = QRCodeDatabase()
+        except Exception as exc:
+            _db_init_error = exc
+            raise
     return _db_instance
