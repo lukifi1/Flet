@@ -5,6 +5,7 @@ from app.core.constants import (
     UI_BUTTON_BG,
     UI_CARD_BG,
     UI_INPUT_BG,
+    UI_PAGE_BG,
     UI_TEXT_DARK,
     UI_TEXT_LIGHT,
     UI_TEXT_MUTED,
@@ -14,6 +15,7 @@ from app.core.constants import (
 def build_error_view(route: str, message: str) -> ft.View:
     return ft.View(
         route=route,
+        bgcolor=UI_PAGE_BG,
         controls=[
             ft.SafeArea(
                 ft.Container(
@@ -40,6 +42,7 @@ def build_error_view(route: str, message: str) -> ft.View:
 def build_empty_saved_codes_view(route: str) -> ft.View:
     return ft.View(
         route=route,
+        bgcolor=UI_PAGE_BG,
         controls=[
             ft.SafeArea(
                 ft.Container(
