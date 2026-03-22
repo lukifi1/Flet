@@ -33,7 +33,7 @@ def get_qrcode_type(text: str) -> QRCodeDataType:
             # Allow leading/trailing whitespace
             curr_pattern = r"^\s*" + curr_pattern + r"\s*$"
 
-            log.debug(f"Checking type {data_type} with pattern: {curr_pattern}")
+            log.verbose(f"Checking type {data_type} with pattern: {curr_pattern}")
 
             # Compile the regex pattern
             regex_pattern = re.compile(curr_pattern, re.IGNORECASE)

@@ -7,7 +7,46 @@ import logging
 import logging.handlers
 import sys
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional, cast
+
+VERBOSE_LEVEL = 5
+
+
+class VerboseLogger(logging.Logger):
+    """Application logger with a custom VERBOSE level helper."""
+
+    def verbose(self, message: str, *args: Any, **kwargs: Any) -> None:
+        if self.isEnabledFor(VERBOSE_LEVEL):
+            self._log(VERBOSE_LEVEL, message, args, **kwargs)
+
+
+def _register_verbose_level() -> None:
+    """Register a custom VERBOSE level and convenience logger methods."""
+    if logging.getLevelName(VERBOSE_LEVEL) != "VERBOSE":
+        logging.addLevelName(VERBOSE_LEVEL, "VERBOSE")
+
+    if logging.getLoggerClass() is not VerboseLogger:
+        logging.setLoggerClass(VerboseLogger)
+
+    if not hasattr(logging.Logger, "verbose"):
+
+        def verbose(
+            self: logging.Logger, message: str, *args: Any, **kwargs: Any
+        ) -> None:
+            if self.isEnabledFor(VERBOSE_LEVEL):
+                self._log(VERBOSE_LEVEL, message, args, **kwargs)
+
+        setattr(logging.Logger, "verbose", verbose)
+
+    if not hasattr(logging, "verbose"):
+
+        def verbose_root(message: str, *args: Any, **kwargs: Any) -> None:
+            logging.log(VERBOSE_LEVEL, message, *args, **kwargs)
+
+        setattr(logging, "verbose", verbose_root)
+
+
+_register_verbose_level()
 
 
 class ColoredFormatter(logging.Formatter):
@@ -17,13 +56,14 @@ class ColoredFormatter(logging.Formatter):
 
     # ANSI color codes
     COLORS = {
-        "DEBUG": "\033[36m",      # Cyan
-        "INFO": "\033[32m",       # Green
-        "WARNING": "\033[33m",    # Yellow
-        "ERROR": "\033[31m",      # Red
-        "CRITICAL": "\033[35m",   # Magenta
-        "RESET": "\033[0m",       # Reset
-        "BOLD": "\033[1m",        # Bold
+        "DEBUG": "\033[36m",  # Cyan
+        "VERBOSE": "\033[94m",  # Bright Blue
+        "INFO": "\033[32m",  # Green
+        "WARNING": "\033[33m",  # Yellow
+        "ERROR": "\033[31m",  # Red
+        "CRITICAL": "\033[35m",  # Magenta
+        "RESET": "\033[0m",  # Reset
+        "BOLD": "\033[1m",  # Bold
     }
     PREFIX_WIDTH = 3
     LEVEL_WIDTH = 8
@@ -40,6 +80,7 @@ class ColoredFormatter(logging.Formatter):
         # Keep visual columns aligned across log levels.
         prefix_map = {
             "DEBUG": "[*]",
+            "VERBOSE": "[v]",
             "INFO": "[i]",
             "WARNING": "[!]",
             "ERROR": "[x]",
@@ -66,7 +107,9 @@ class ColoredFormatter(logging.Formatter):
         return message
 
 
-def setup_logging(log_dir: Optional[Path] = None, level: int = logging.INFO) -> logging.Logger:
+def setup_logging(
+    log_dir: Optional[Path] = None, level: int = logging.INFO
+) -> VerboseLogger:
     """
     Configure application logging with file and console handlers.
 
@@ -77,13 +120,15 @@ def setup_logging(log_dir: Optional[Path] = None, level: int = logging.INFO) -> 
     Returns:
         Configured logger instance
     """
+    _register_verbose_level()
+
     if log_dir is None:
         log_dir = Path(__file__).resolve().parents[3] / "data" / "logs"
-    
+
     log_dir.mkdir(parents=True, exist_ok=True)
 
     # Create logger
-    logger = logging.getLogger("qr_maker")
+    logger = cast(VerboseLogger, logging.getLogger("qr_maker"))
     logger.setLevel(level)
 
     # Avoid duplicate handlers if called multiple times
@@ -92,7 +137,9 @@ def setup_logging(log_dir: Optional[Path] = None, level: int = logging.INFO) -> 
 
     # Console handler (INFO and above) with colored output
     console_handler = logging.StreamHandler(sys.stdout)
-    console_handler.setLevel(logging.DEBUG)  # Capture all levels, formatter controls output
+    console_handler.setLevel(
+        logging.DEBUG
+    )  # Capture all levels, formatter controls output
     console_formatter = ColoredFormatter()
     console_handler.setFormatter(console_formatter)
 
@@ -117,8 +164,8 @@ def setup_logging(log_dir: Optional[Path] = None, level: int = logging.INFO) -> 
     return logger
 
 
-def get_logger(name: str = "qr_maker") -> logging.Logger:
+def get_logger(name: str = "qr_maker") -> VerboseLogger:
     """Get the configured logger instance."""
     # Ensure all module loggers are children of 'qr_maker' so they share handlers.
     logger_name = name if name.startswith("qr_maker") else f"qr_maker.{name}"
-    return logging.getLogger(logger_name)
+    return cast(VerboseLogger, logging.getLogger(logger_name))
