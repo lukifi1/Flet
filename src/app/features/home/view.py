@@ -19,11 +19,14 @@ from app.core.constants import (
     UI_TEXT_LIGHT,
     QRCodeDataType,
 )
+from app.core.logger import get_logger
 from app.core.qr_generator import generate_and_save_qr, make_qr_png_bytes
 from app.core.utils import get_qrcode_type, prepend_uri_scheme, qrcode_get_ecc_level
 
 from .actions import handle_input_blur, handle_input_change, handle_input_focus
 from .state import HomeState
+
+log = get_logger(__name__)
 
 
 def home_view(page: ft.Page):
@@ -92,6 +95,7 @@ def home_view(page: ft.Page):
 
     def gen(page: ft.Page):
         text = (input_field.value or "").strip()
+        log.debug(f"Generating QR code for input: {text[:50]}...")
 
         qrcode_type = get_qrcode_type(text)
         text = prepend_uri_scheme(text, qrcode_type)
@@ -107,7 +111,7 @@ def home_view(page: ft.Page):
     def save_qr_code(page: ft.Page):
         """Save the currently generated QR code to the database."""
         if not img.src:
-            print("✗ No QR code generated yet")
+            log.warning("No QR code generated yet")
             return
 
         text = (input_field.value or "").strip()
@@ -130,13 +134,13 @@ def home_view(page: ft.Page):
 
             if result["success"]:
                 qr_id = result.get("qr_id")
-                show_snackbar(page, f"✓ QR Code saved! (ID: {qr_id})")
-                print(f"✓ Saved QR code {qr_id}: {text[:50]}...")
+                show_snackbar(page, f"QR Code saved! (ID: {qr_id})")
+                log.info(f"Saved QR code {qr_id}: {text[:50]}...")
             else:
-                show_snackbar(page, f"✗ Error: {result.get('error', 'Unknown error')}")
+                show_snackbar(page, f"Error: {result.get('error', 'Unknown error')}")
         except Exception as e:
-            print(f"✗ Error saving QR code: {e}")
-            show_snackbar(page, f"✗ Error: {str(e)}")
+            log.error(f"Error saving QR code: {e}")
+            show_snackbar(page, f"Error: {str(e)}")
 
     generate_button = ft.Button(
         "Generate",

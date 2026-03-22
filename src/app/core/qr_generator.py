@@ -13,7 +13,11 @@ from app.core.constants import (
     QR_BACK_COLOR,
     QR_FILL_COLOR,
 )
-from app.core.utils import qrcode_select_best_ecc, qrcode_get_ecc_level, get_qrcode_type
+from app.core.utils import get_qrcode_type, qrcode_get_ecc_level, qrcode_select_best_ecc
+
+from .logger import get_logger
+
+log = get_logger(__name__)
 
 
 def add_logo_inside_qr(qr_img: Image.Image, logo_path: str) -> Image.Image:
@@ -59,8 +63,7 @@ def add_logo_inside_qr(qr_img: Image.Image, logo_path: str) -> Image.Image:
 
 
 def make_qr_png_bytes(text: str, logo_path: str | None = None) -> bytes:
-    # TODO: logging
-    print(f"Generating QR code for text: {text}")
+    log.debug(f"Generating QR code for text: {text[:50]}...")
 
     ecc = qrcode_select_best_ecc(text)
 
@@ -90,40 +93,42 @@ def generate_and_save_qr(
     logo_path: Optional[str] = None,
     auto_save: bool = True,
     metadata: Optional[dict] = None,
-    tags: Optional[list] = None
+    tags: Optional[list] = None,
 ) -> dict:
     """
     Generate a QR code and optionally save it to the database.
-    
+
     Args:
         text: Text data to encode
         logo_path: Path to logo image (optional)
         auto_save: Whether to automatically save to database
         metadata: Additional metadata for the QR code
         tags: Tags for categorization
-    
+
     Returns:
         Dictionary with generation results including QR ID if saved
     """
     from app.core.db import get_db
-    
+
     try:
         # Generate QR code
         png_bytes = make_qr_png_bytes(text, logo_path)
-        
+
         # Get QR code properties
         qr_type = get_qrcode_type(text).value
-        ecc_level = qrcode_get_ecc_level(text).value if qrcode_get_ecc_level(text) else "NA"
-        
+        ecc_level = (
+            qrcode_get_ecc_level(text).value if qrcode_get_ecc_level(text) else "NA"
+        )
+
         result = {
             "success": True,
             "binary_data": png_bytes,
             "data": text,
             "qr_type": qr_type,
             "ecc_level": ecc_level,
-            "qr_id": None
+            "qr_id": None,
         }
-        
+
         # Save to database if requested
         if auto_save:
             db = get_db()
@@ -133,18 +138,13 @@ def generate_and_save_qr(
                 ecc_level=ecc_level,
                 binary_data=png_bytes,
                 metadata=metadata,
-                tags=tags
+                tags=tags,
             )
             result["qr_id"] = qr_id
             result["saved"] = True
-        
-        return result
-        
-    except Exception as e:
-        print(f"✗ Error generating/saving QR code: {e}")
-        return {
-            "success": False,
-            "error": str(e),
-            "binary_data": None
-        }
 
+        return result
+
+    except Exception as e:
+        log.error(f"Error generating/saving QR code: {e}")
+        return {"success": False, "error": str(e), "binary_data": None}

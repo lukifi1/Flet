@@ -9,6 +9,10 @@ import sqlite3
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from .logger import get_logger
+
+log = get_logger(__name__)
+
 
 def _resolve_default_db_path() -> Path:
     """Resolve a writable default database path.
@@ -44,7 +48,9 @@ class QRCodeDatabase:
         Args:
             db_path: Path to SQLite database file. Defaults to ./data/qrcodes.db
         """
+        log.info("Initializing database...")
         self.db_path = (db_path or DB_PATH).expanduser().resolve()
+        log.debug(f"Database path: {self.db_path}")
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         # Ensure file existence is explicit; sqlite will still open/create as needed.
         if not self.db_path.exists():
@@ -53,6 +59,7 @@ class QRCodeDatabase:
 
     def _get_connection(self) -> sqlite3.Connection:
         """Get database connection with row factory."""
+        log.debug(f"Opening database connection at: {self.db_path}")
         conn = sqlite3.connect(self.db_path)
 
         conn.row_factory = sqlite3.Row
@@ -142,11 +149,11 @@ class QRCodeDatabase:
             if qr_id is None:
                 raise sqlite3.IntegrityError("Failed to retrieve inserted QR code ID")
             conn.commit()
-            print(f"✓ QR code saved with ID: {qr_id}")
+            log.info(f"QR code saved with ID: {qr_id}")
             return qr_id
 
         except sqlite3.IntegrityError as e:
-            print(f"✗ Error saving QR code: {e}")
+            log.error(f"Error saving QR code: {e}")
             raise
         finally:
             conn.close()
@@ -237,7 +244,7 @@ class QRCodeDatabase:
         cursor.execute("DELETE FROM qr_codes")
         conn.commit()
         conn.close()
-        print("✓ All QR codes deleted")
+        log.info("All QR codes deleted")
 
 
 # Singleton instance
@@ -252,6 +259,7 @@ def get_db() -> QRCodeDatabase:
     Returns:
         QRCodeDatabase instance
     """
+    log.debug("Accessing database instance...")
     global _db_instance, _db_init_error
     if _db_init_error is not None:
         raise RuntimeError(

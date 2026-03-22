@@ -1,5 +1,7 @@
 import re
 
+from app.core.logger import get_logger
+
 from .constants import (
     ECC_FUNCTION_MAP,
     ECC_ORDER,
@@ -12,6 +14,7 @@ from .constants import (
     QRCodeEccLevel,
 )
 
+log = get_logger(__name__)
 
 def get_qrcode_type(text: str) -> QRCodeDataType:
     """Determine the QR code data type based on the input text."""
@@ -30,13 +33,13 @@ def get_qrcode_type(text: str) -> QRCodeDataType:
             # Allow leading/trailing whitespace
             curr_pattern = r"^\s*" + curr_pattern + r"\s*$"
 
-            # print(f"Checking type {data_type} with pattern: {curr_pattern}")
+            log.debug(f"Checking type {data_type} with pattern: {curr_pattern}")
 
             # Compile the regex pattern
             regex_pattern = re.compile(curr_pattern, re.IGNORECASE)
 
             if re.fullmatch(regex_pattern, text.strip()):
-                print(f"Matched type: {data_type}")
+                log.debug(f"Matched type: {data_type}")
                 return data_type
 
     # If no patterns match, return TEXT as default
@@ -45,7 +48,7 @@ def get_qrcode_type(text: str) -> QRCodeDataType:
 
 def prepend_uri_scheme(text: str, data_type: QRCodeDataType) -> str:
     """Prepend the appropriate URI scheme to the text if necessary."""
-    print(f"Prepending URI scheme for data type: {data_type} and text: {text}")
+    log.debug(f"Prepending URI scheme for data type: {data_type} and text: {text}")
 
     # If the data type has no associated URI scheme, return the text as is
     if data_type not in URI_SCHEMES:
@@ -62,12 +65,12 @@ def prepend_uri_scheme(text: str, data_type: QRCodeDataType) -> str:
     for scheme in schemes:
         # Escape for safe regex
         if re.match(rf"^{re.escape(scheme)}", text, re.IGNORECASE):
-            # print(f"Text already starts with scheme {scheme}.")
+            log.debug(f"Text already starts with scheme {scheme}.")
             return text
 
     # Prepend the default scheme (first in the list)
     default_scheme = schemes[0] if schemes else ""
-    # print(f"Prepending using default scheme {default_scheme}.")
+    log.debug(f"Prepending default scheme {default_scheme} to text.")
     return default_scheme + text
 
 
