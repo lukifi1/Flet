@@ -117,49 +117,37 @@ def build_preview_dialog(preview_img: ft.Image, on_close) -> ft.AlertDialog:
     )
 
 
-def build_qr_item_card(qr_data: dict, qr_preview_src: str, on_view_click) -> ft.Control:
+def build_qr_item_card(qr_data: dict, qr_preview_src: str, on_view_click, on_delete_click) -> ft.Control:
     qr_id = qr_data.get("id")
     data = qr_data.get("data", "")[:50]
     qr_type = qr_data.get("qr_type", "Text")
     created_at = qr_data.get("created_at", "")
 
     details_controls: list[ft.Control] = [
-        ft.Text(
-            f"ID: {qr_id}",
-            size=14,
-            weight=ft.FontWeight.W_600,
-            color=UI_TEXT_DARK,
-        ),
+        ft.Text(f"ID: {qr_id}", size=14, weight=ft.FontWeight.W_600, color=UI_TEXT_DARK),
         ft.Container(height=4),
-        ft.Text(
-            f"Type: {qr_type}",
-            size=12,
-            color=UI_TEXT_MUTED,
-        ),
+        ft.Text(f"Type: {qr_type}", size=12, color=UI_TEXT_MUTED),
         ft.Container(height=4),
-        ft.Text(
-            f"Data: {data}...",
-            size=12,
-            color=UI_TEXT_MUTED,
-        ),
+        ft.Text(f"Data: {data}...", size=12, color=UI_TEXT_MUTED),
         ft.Container(height=4),
-        ft.Text(
-            f"Date: {created_at[:10] if created_at else 'N/A'}",
-            size=11,
-            color=UI_TEXT_MUTED,
-        ),
+        ft.Text(f"Date: {created_at[:10] if created_at else 'N/A'}", size=11, color=UI_TEXT_MUTED),
         ft.Container(height=10),
-        ft.Button(
-            "View",
-            height=32,
-            width=90,
-            color=ft.Colors.WHITE,
-            style=ft.ButtonStyle(
-                shape=ft.RoundedRectangleBorder(radius=14),
-                color=UI_BUTTON_BG,
+        ft.Row([
+            ft.ElevatedButton(
+                "View",
+                height=32,
+                width=90,
+                color=ft.Colors.WHITE,
+                bgcolor=UI_BUTTON_BG,
+                on_click=on_view_click,
             ),
-            on_click=on_view_click,
-        ),
+            ft.IconButton(
+                icon=ft.Icons.DELETE_OUTLINE,
+                icon_color=ft.Colors.RED_400,
+                tooltip="Delete QR",
+                on_click=on_delete_click,
+            ),
+        ], spacing=10)
     ]
 
     row_controls: list[ft.Control] = [

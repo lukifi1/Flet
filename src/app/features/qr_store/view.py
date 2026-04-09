@@ -74,6 +74,15 @@ def my_codes_view(page: ft.Page) -> ft.View:
     def card_builder(qr_data: dict) -> ft.Control:
         qr_id = qr_data.get("id")
         qr_preview_src = encode_preview_src(qr_data)
+        # New delete wrapper
+        def handle_delete(_):
+            from .actions import delete_qr_code
+            delete_qr_code(page, state, db, qr_id)
+            # Refresh the list immediately
+            handle_search_change(
+                page, state, state.search_field.value or "", 
+                card_builder, build_empty_results_card
+            )
         return build_qr_item_card(
             qr_data=qr_data,
             qr_preview_src=qr_preview_src,
@@ -82,6 +91,7 @@ def my_codes_view(page: ft.Page) -> ft.View:
                 if isinstance(qr_id, int)
                 else None
             ),
+            on_delete_click=handle_delete,
         )
 
     state.search_field = build_search_field(

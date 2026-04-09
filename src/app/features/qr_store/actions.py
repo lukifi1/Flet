@@ -67,3 +67,18 @@ def handle_search_change(
 ) -> None:
     apply_search(state, query, card_builder, empty_card_builder)
     page.update()
+
+def delete_qr_code(page: ft.Page, state: QRStoreState, db, qr_id: int) -> None:
+    """Deletes a QR code from the DB and updates the local UI state."""
+    try:
+        db.delete_qr_code(qr_id)
+        
+        state.saved_qr_codes = [qr for qr in state.saved_qr_codes if qr.get("id") != qr_id]
+        
+        if not state.saved_qr_codes:
+            page.go("/my-codes")
+        else:
+            page.update()
+            
+    except Exception as e:
+        print(f"Error deleting QR code: {e}")

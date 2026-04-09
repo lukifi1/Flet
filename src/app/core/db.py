@@ -70,11 +70,25 @@ class QRCodeDatabase:
         conn = self._get_connection()
         cursor = conn.cursor()
 
-        # Create QR Codes table
-        cursor.execute(
-            """
+        # Enable foreign key support for this connection
+        cursor.execute("PRAGMA foreign_keys = ON")
+
+        # 1. Categories Table
+        # Stores user-defined groupings for QR codes
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS categories (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL UNIQUE,
+                description TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
+        # 2. QR Codes Table (Updated with category relationship)
+        cursor.execute("""
             CREATE TABLE IF NOT EXISTS qr_codes (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
+                category_id INTEGER,
                 data TEXT NOT NULL,
                 qr_type TEXT NOT NULL,
                 ecc_level TEXT NOT NULL,
@@ -82,22 +96,28 @@ class QRCodeDatabase:
                 metadata TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                tags TEXT
+                tags TEXT,
+                FOREIGN KEY (category_id) REFERENCES categories (id) 
+                    ON DELETE SET NULL
             )
-        """
-        )
+        """)
 
-        # Create index for faster queries
-        cursor.execute(
-            """
-            CREATE INDEX IF NOT EXISTS idx_created_at ON qr_codes(created_at DESC)
-        """
-        )
-        cursor.execute(
-            """
-            CREATE INDEX IF NOT EXISTS idx_qr_type ON qr_codes(qr_type)
-        """
-        )
+        # 3. Favorites Table
+        # A simple mapping table to flag specific QR codes
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS favorites (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                qr_code_id INTEGER NOT NULL UNIQUE,
+                added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (qr_code_id) REFERENCES qr_codes (id) 
+                    ON DELETE CASCADE
+            )
+        """)
+
+        # Create indices for performance
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_qr_category ON qr_codes(category_id)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_created_at ON qr_codes(created_at DESC)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_qr_type ON qr_codes(qr_type)")
 
         conn.commit()
         conn.close()
@@ -245,6 +265,41 @@ class QRCodeDatabase:
         conn.commit()
         conn.close()
         log.info("All QR codes deleted")
+
+    def delete_qr_code(self, qr_id: int) -> bool:
+            """
+            Delete a specific QR code by its ID.
+
+            Args:
+                qr_id: The ID of the QR code to delete.
+
+            Returns:
+                True if a row was deleted, False otherwise.
+            """
+            conn = self._get_connection()
+            cursor = conn.cursor()
+
+            try:
+                cursor.execute(
+                    "DELETE FROM qr_codes WHERE id = ?",
+                    (qr_id,)
+                )
+                conn.commit()
+                
+                # rowcount tells us if an actual row was removed
+                deleted = cursor.rowcount > 0
+                if deleted:
+                    log.info(f"QR code with ID {qr_id} deleted successfully.")
+                else:
+                    log.warning(f"No QR code found with ID {qr_id} to delete.")
+                
+                return deleted
+
+            except sqlite3.Error as e:
+                log.error(f"Error deleting QR code {qr_id}: {e}")
+                return False
+            finally:
+                conn.close()
 
 
 # Singleton instance
