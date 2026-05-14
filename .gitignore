@@ -128,3 +128,12 @@ dist/
 .vscode/
 .pytest_cache/
 .mypy_cache/
+
+# Please Dont!!!
+*.db
+*.apk
+SPRINT1_COMPLETION_REPORT.md
+SPRINT1_DOCUMENTATION.md
+tmp/
+Makefile
+pyproject.toml
