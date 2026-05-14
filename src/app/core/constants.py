@@ -133,6 +133,14 @@ QR_FILL_COLOR = "black"
 QR_BACK_COLOR = "white"
 QR_NO_DATA_IMAGE = "/no-qrcode.png"  # Path to "no data" image asset
 
+QR_CODE_CATEGORIES = [
+    "General",
+    "Work",
+    "Private",
+    "Links",
+    "WiFi",
+]
+
 # ====================================
 #       Logo Configuration
 # ====================================

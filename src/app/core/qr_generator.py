@@ -94,6 +94,8 @@ def generate_and_save_qr(
     auto_save: bool = True,
     metadata: Optional[dict] = None,
     tags: Optional[list] = None,
+    category_name: str = "General",
+    is_favorite: bool = False,
 ) -> dict:
     """
     Generate a QR code and optionally save it to the database.
@@ -139,6 +141,8 @@ def generate_and_save_qr(
                 binary_data=png_bytes,
                 metadata=metadata,
                 tags=tags,
+                category_name=category_name,
+                is_favorite=is_favorite,
             )
             result["qr_id"] = qr_id
             result["saved"] = True

@@ -4,6 +4,7 @@ import base64
 import flet as ft
 
 from app.core.constants import (
+    QR_CODE_CATEGORIES,
     QR_ECC_LEVEL_COLORS,
     QR_NO_DATA_IMAGE,
     UI_BUTTON_BG,
@@ -35,6 +36,7 @@ log = get_logger(__name__)
 
 
 def home_view(page: ft.Page):
+    page.theme_mode = ft.ThemeMode.LIGHT
     title = ft.Text(
         "QR - Code Generator",
         size=22,
@@ -46,7 +48,7 @@ def home_view(page: ft.Page):
         hint_text="Input",
         multiline=True,
         min_lines=2,
-        max_lines=4,
+        max_lines=3,
         bgcolor=UI_INPUT_BG,
         color=UI_TEXT_LIGHT,
         border_radius=UI_INPUT_RADIUS,
@@ -60,6 +62,44 @@ def home_view(page: ft.Page):
         ),
         text_size=14,
         content_padding=ft.Padding.symmetric(horizontal=16, vertical=12),
+    )
+
+    category_dropdown = ft.Dropdown(
+        width=190,
+        value="General",
+        label="Category",
+        hint_text="Select category",
+        options=[ft.dropdown.Option(category) for category in QR_CODE_CATEGORIES],
+        bgcolor=ft.Colors.WHITE,
+        color=UI_TEXT_DARK,
+        border_radius=UI_INPUT_RADIUS,
+        border_color=UI_INPUT_BG,
+        focused_border_color=UI_BUTTON_BG,
+        text_size=13,
+        content_padding=ft.Padding.symmetric(horizontal=12, vertical=10),
+    )
+
+
+    favorite_checkbox = ft.Checkbox(
+        label="Favorite",
+        value=False,
+        label_style=ft.TextStyle(
+            color=UI_TEXT_DARK,
+            size=13,
+            weight=ft.FontWeight.W_500,
+        ),
+    )
+
+    category_and_favorite_row = ft.Row(
+        [
+            category_dropdown,
+            ft.Container(
+                width=135,
+                content=favorite_checkbox,
+            ),
+        ],
+        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+        vertical_alignment=ft.CrossAxisAlignment.CENTER,
     )
 
     badge_type = ft.Text(QRCodeDataType.TEXT.value, color=UI_TEXT_LIGHT, size=12)
@@ -90,8 +130,8 @@ def home_view(page: ft.Page):
 
     img = ft.Image(
         src=QR_NO_DATA_IMAGE,
-        width=260,
-        height=260,
+        width=220,
+        height=220,
         fit=ft.BoxFit.CONTAIN,
         border_radius=14,
     )
@@ -102,9 +142,9 @@ def home_view(page: ft.Page):
         "Generate",
         height=44,
         color=ft.Colors.WHITE,
+        bgcolor=ft.Colors.BLACK,
         style=ft.ButtonStyle(
             shape=ft.RoundedRectangleBorder(radius=UI_BUTTON_RADIUS),
-            color=UI_BUTTON_BG,
         ),
     )
 
@@ -112,9 +152,9 @@ def home_view(page: ft.Page):
         "Save",
         height=44,
         color=ft.Colors.WHITE,
+        bgcolor=ft.Colors.GREY_400,
         style=ft.ButtonStyle(
             shape=ft.RoundedRectangleBorder(radius=UI_BUTTON_RADIUS),
-            color=UI_SUCCESS_BG,
         ),
         disabled=True,
     )
@@ -124,34 +164,38 @@ def home_view(page: ft.Page):
         "Share",
         height=44,
         color=ft.Colors.WHITE,
+        bgcolor=ft.Colors.BLACK,
         style=ft.ButtonStyle(
             shape=ft.RoundedRectangleBorder(radius=UI_BUTTON_RADIUS),
-            color=UI_BUTTON_BG,
         ),
     )
+
     buttons_row = ft.Row(
         [
-            ft.Container(expand=True, content=generate_button),
-            ft.Container(expand=True, content=save_button),
-            ft.Container(expand=True, content=share_button),
+            ft.Container(width=112, content=generate_button),
+            ft.Container(width=112, content=save_button),
+            ft.Container(width=112, content=share_button),
         ],
-        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+        alignment=ft.MainAxisAlignment.CENTER,
+        spacing=12,
     )
 
     main_card = ft.Container(
         width=360,
         bgcolor=UI_CARD_BG,
         border_radius=UI_CORNER_RADIUS,
-        padding=ft.Padding.symmetric(horizontal=22, vertical=22),
+        padding=ft.Padding.symmetric(horizontal=22, vertical=18),
         content=ft.Column(
             [
-                ft.Container(height=8),
+                ft.Container(height=4),
                 ft.Row(
                     [img],
                     alignment=ft.MainAxisAlignment.CENTER,
                 ),
-                ft.Container(height=16),
+                ft.Container(height=12),
                 input_field,
+                ft.Container(height=10),
+                category_and_favorite_row,
                 ft.Container(height=8),
                 char_info,
                 ft.Container(height=8),
@@ -160,7 +204,7 @@ def home_view(page: ft.Page):
             spacing=0,
         ),
     )
-    
+
     # ================== STATE INITIALIZATION ==================
 
     state = HomeState(
@@ -173,6 +217,8 @@ def home_view(page: ft.Page):
         img=img,
         save_button=save_button,
         share=share,
+        category_dropdown=category_dropdown,
+        favorite_checkbox=favorite_checkbox,
     )
 
     # ================== EVENT HANDLERS ==================

@@ -70,6 +70,7 @@ def gen(page: ft.Page, state: HomeState):
 
     # Enable save button when QR is generated
     state.save_button.disabled = False
+    state.save_button.bgcolor = ft.Colors.BLACK
     page.update()
 
 
@@ -88,6 +89,9 @@ def save_qr_code(page: ft.Page, state: HomeState):
         qrcode_type = get_qrcode_type(text)
         text = prepend_uri_scheme(text, qrcode_type)
 
+        category_name = state.category_dropdown.value or "General"
+        is_favorite = bool(state.favorite_checkbox.value)
+
         # Generate and save QR code
         result = generate_and_save_qr(
             text=text,
@@ -95,6 +99,8 @@ def save_qr_code(page: ft.Page, state: HomeState):
             auto_save=True,
             metadata={"auto_generated": True},
             tags=["generated"],
+            category_name=category_name,
+            is_favorite=is_favorite,
         )
 
         if result["success"]:

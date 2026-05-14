@@ -122,11 +122,17 @@ def build_qr_item_card(qr_data: dict, qr_preview_src: str, on_view_click, on_del
     data = qr_data.get("data", "")[:50]
     qr_type = qr_data.get("qr_type", "Text")
     created_at = qr_data.get("created_at", "")
+    category_name = qr_data.get("category_name") or "General"
+    is_favorite = bool(qr_data.get("is_favorite"))
 
     details_controls: list[ft.Control] = [
         ft.Text(f"ID: {qr_id}", size=14, weight=ft.FontWeight.W_600, color=UI_TEXT_DARK),
         ft.Container(height=4),
         ft.Text(f"Type: {qr_type}", size=12, color=UI_TEXT_MUTED),
+        ft.Container(height=4),
+        ft.Text(f"Category: {category_name}", size=12, color=UI_TEXT_MUTED),
+        ft.Container(height=4),
+        ft.Text(f"Favorite: {'Yes' if is_favorite else 'No'}", size=12, color=UI_TEXT_MUTED),
         ft.Container(height=4),
         ft.Text(f"Data: {data}...", size=12, color=UI_TEXT_MUTED),
         ft.Container(height=4),

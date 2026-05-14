@@ -9,6 +9,7 @@ import sqlite3
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from .constants import QR_CODE_CATEGORIES
 from .logger import get_logger
 
 log = get_logger(__name__)
@@ -102,6 +103,11 @@ class QRCodeDatabase:
             )
         """)
 
+        cursor.execute("PRAGMA table_info(qr_codes)")
+        columns = [row["name"] for row in cursor.fetchall()]
+        if "category_id" not in columns:
+            cursor.execute("ALTER TABLE qr_codes ADD COLUMN category_id INTEGER")
+
         # 3. Favorites Table
         # A simple mapping table to flag specific QR codes
         cursor.execute("""
@@ -114,6 +120,15 @@ class QRCodeDatabase:
             )
         """)
 
+        for category_name in QR_CODE_CATEGORIES:
+            cursor.execute(
+                """
+                INSERT OR IGNORE INTO categories (name)
+                VALUES (?)
+            """,
+                (category_name,),
+            )
+
         # Create indices for performance
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_qr_category ON qr_codes(category_id)")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_created_at ON qr_codes(created_at DESC)")
@@ -121,6 +136,51 @@ class QRCodeDatabase:
 
         conn.commit()
         conn.close()
+
+    def get_or_create_category(self, name: str) -> int:
+        category_name = (name or "General").strip() or "General"
+        conn = self._get_connection()
+        cursor = conn.cursor()
+
+        try:
+            cursor.execute(
+                """
+                INSERT OR IGNORE INTO categories (name)
+                VALUES (?)
+            """,
+                (category_name,),
+            )
+            cursor.execute(
+                """
+                SELECT id FROM categories WHERE name = ?
+            """,
+                (category_name,),
+            )
+            row = cursor.fetchone()
+            conn.commit()
+
+            if row is None:
+                raise sqlite3.IntegrityError("Failed to retrieve category ID")
+
+            return int(row["id"])
+        finally:
+            conn.close()
+
+    def get_all_categories(self) -> List[Dict[str, Any]]:
+        conn = self._get_connection()
+        cursor = conn.cursor()
+
+        cursor.execute(
+            """
+            SELECT * FROM categories
+            ORDER BY name ASC
+        """
+        )
+
+        rows = cursor.fetchall()
+        conn.close()
+
+        return [dict(row) for row in rows]
 
     def save_qr_code(
         self,
@@ -130,6 +190,8 @@ class QRCodeDatabase:
         binary_data: Optional[bytes] = None,
         metadata: Optional[Dict[str, Any]] = None,
         tags: Optional[List[str]] = None,
+        category_name: str = "General",
+        is_favorite: bool = False,
     ) -> int:
         """
         Save a new QR code to the database.
@@ -149,13 +211,16 @@ class QRCodeDatabase:
         cursor = conn.cursor()
 
         try:
+            category_id = self.get_or_create_category(category_name)
+
             cursor.execute(
                 """
                 INSERT INTO qr_codes 
-                (data, qr_type, ecc_level, binary_data, metadata, tags, created_at, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                (category_id, data, qr_type, ecc_level, binary_data, metadata, tags, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
             """,
                 (
+                    category_id,
                     data,
                     qr_type,
                     ecc_level,
@@ -168,6 +233,16 @@ class QRCodeDatabase:
             qr_id = cursor.lastrowid
             if qr_id is None:
                 raise sqlite3.IntegrityError("Failed to retrieve inserted QR code ID")
+
+            if is_favorite:
+                cursor.execute(
+                    """
+                    INSERT OR IGNORE INTO favorites (qr_code_id)
+                    VALUES (?)
+                """,
+                    (qr_id,),
+                )
+
             conn.commit()
             log.info(f"QR code saved with ID: {qr_id}")
             return qr_id
@@ -175,6 +250,31 @@ class QRCodeDatabase:
         except sqlite3.IntegrityError as e:
             log.error(f"Error saving QR code: {e}")
             raise
+        finally:
+            conn.close()
+
+    def set_favorite(self, qr_id: int, is_favorite: bool) -> None:
+        conn = self._get_connection()
+        cursor = conn.cursor()
+
+        try:
+            if is_favorite:
+                cursor.execute(
+                    """
+                    INSERT OR IGNORE INTO favorites (qr_code_id)
+                    VALUES (?)
+                """,
+                    (qr_id,),
+                )
+            else:
+                cursor.execute(
+                    """
+                    DELETE FROM favorites WHERE qr_code_id = ?
+                """,
+                    (qr_id,),
+                )
+
+            conn.commit()
         finally:
             conn.close()
 
@@ -193,7 +293,14 @@ class QRCodeDatabase:
 
         cursor.execute(
             """
-            SELECT * FROM qr_codes WHERE id = ?
+            SELECT 
+                qr_codes.*,
+                categories.name AS category_name,
+                CASE WHEN favorites.id IS NULL THEN 0 ELSE 1 END AS is_favorite
+            FROM qr_codes
+            LEFT JOIN categories ON qr_codes.category_id = categories.id
+            LEFT JOIN favorites ON qr_codes.id = favorites.qr_code_id
+            WHERE qr_codes.id = ?
         """,
             (qr_id,),
         )
@@ -208,6 +315,7 @@ class QRCodeDatabase:
     def get_all_qr_codes(
         self, limit: int = 100, offset: int = 0
     ) -> List[Dict[str, Any]]:
+
         """
         Retrieve all QR codes with pagination.
 
@@ -223,8 +331,14 @@ class QRCodeDatabase:
 
         cursor.execute(
             """
-            SELECT * FROM qr_codes 
-            ORDER BY created_at DESC 
+            SELECT 
+                qr_codes.*,
+                categories.name AS category_name,
+                CASE WHEN favorites.id IS NULL THEN 0 ELSE 1 END AS is_favorite
+            FROM qr_codes
+            LEFT JOIN categories ON qr_codes.category_id = categories.id
+            LEFT JOIN favorites ON qr_codes.id = favorites.qr_code_id
+            ORDER BY qr_codes.created_at DESC 
             LIMIT ? OFFSET ?
         """,
             (limit, offset),
@@ -254,6 +368,8 @@ class QRCodeDatabase:
                 # Keep original value if legacy rows contain non-JSON text
                 pass
 
+        data["is_favorite"] = bool(data.get("is_favorite"))
+
         return data
 
     def delete_all(self):
@@ -261,6 +377,7 @@ class QRCodeDatabase:
         conn = self._get_connection()
         cursor = conn.cursor()
 
+        cursor.execute("DELETE FROM favorites")
         cursor.execute("DELETE FROM qr_codes")
         conn.commit()
         conn.close()
@@ -281,18 +398,22 @@ class QRCodeDatabase:
 
             try:
                 cursor.execute(
+                    "DELETE FROM favorites WHERE qr_code_id = ?",
+                    (qr_id,)
+                )
+                cursor.execute(
                     "DELETE FROM qr_codes WHERE id = ?",
                     (qr_id,)
                 )
                 conn.commit()
-                
+
                 # rowcount tells us if an actual row was removed
                 deleted = cursor.rowcount > 0
                 if deleted:
                     log.info(f"QR code with ID {qr_id} deleted successfully.")
                 else:
                     log.warning(f"No QR code found with ID {qr_id} to delete.")
-                
+
                 return deleted
 
             except sqlite3.Error as e:
