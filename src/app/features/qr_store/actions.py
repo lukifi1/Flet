@@ -1,5 +1,5 @@
 import base64
-from typing import Callable
+from typing import Callable, Tuple
 
 import flet as ft
 
@@ -25,20 +25,56 @@ def encode_preview_src(qr_data: dict) -> str:
     return ""
 
 
-def filter_qr_codes(saved_qr_codes: list[dict], query: str) -> list[dict]:
+def filter_qr_codes(
+    saved_qr_codes: list[dict],
+    query: str = "",
+    category_filter: str = "All",
+    favorites_only: bool = False,
+) -> list[dict]:
     query_normalized = query.strip().lower()
-    if not query_normalized:
-        return saved_qr_codes
+    filtered_codes = []
 
-    return [
-        qr
-        for qr in saved_qr_codes
-        if query_normalized
-        in (
+    for qr in saved_qr_codes:
+        if category_filter and category_filter != "All":
+            if (qr.get("category_name") or "General") != category_filter:
+                continue
+        if favorites_only and not bool(qr.get("is_favorite")):
+            continue
+
+        if not query_normalized:
+            filtered_codes.append(qr)
+            continue
+
+        searchable_text = (
             f"{qr.get('id', '')} {qr.get('qr_type', '')} "
-            f"{qr.get('data', '')} {qr.get('created_at', '')}"
+            f"{qr.get('data', '')} {qr.get('created_at', '')} "
+            f"{qr.get('category_name', '')}"
         ).lower()
-    ]
+
+        if query_normalized in searchable_text:
+            filtered_codes.append(qr)
+
+    return filtered_codes
+
+
+def sort_qr_codes(qr_codes: list[dict], sort_by: str, ascending: bool = True) -> list[dict]:
+    def sort_key(qr: dict):
+        if sort_by == "created_at":
+            return qr.get("created_at") or ""
+        if sort_by == "category_name":
+            return (qr.get("category_name") or "").lower()
+        if sort_by == "id":
+            return qr.get("id") or 0
+        return (qr.get(sort_by) or "").lower()
+
+    return sorted(qr_codes, key=sort_key, reverse=not ascending)
+
+
+def parse_sort_value(sort_value: str) -> Tuple[str, bool]:
+    parts = sort_value.split(".")
+    if len(parts) == 2:
+        return parts[0], parts[1] == "asc"
+    return sort_value, True
 
 
 def apply_search(
@@ -47,13 +83,24 @@ def apply_search(
     card_builder: Callable[[dict], ft.Control],
     empty_card_builder: Callable[[], ft.Control],
 ) -> None:
-    filtered_codes = filter_qr_codes(state.saved_qr_codes, query)
+    state.search_query = query
+    filtered_codes = filter_qr_codes(
+        state.saved_qr_codes,
+        state.search_query,
+        state.category_filter,
+        state.favorites_only,
+    )
+    sorted_codes = sort_qr_codes(
+        filtered_codes,
+        state.sort_by,
+        state.sort_ascending,
+    )
     state.result_count.value = (
-        f"{len(filtered_codes)} / {len(state.saved_qr_codes)} codes"
+        f"{len(sorted_codes)} / {len(state.saved_qr_codes)} codes"
     )
     state.list_view.controls = (
-        [card_builder(qr) for qr in filtered_codes]
-        if filtered_codes
+        [card_builder(qr) for qr in sorted_codes]
+        if sorted_codes
         else [empty_card_builder()]
     )
 
@@ -67,6 +114,62 @@ def handle_search_change(
 ) -> None:
     apply_search(state, query, card_builder, empty_card_builder)
     page.update()
+
+
+def handle_filter_change(
+    page: ft.Page,
+    state: QRStoreState,
+    category_filter: str,
+    card_builder: Callable[[dict], ft.Control],
+    empty_card_builder: Callable[[], ft.Control],
+) -> None:
+    state.category_filter = category_filter
+    apply_search(state, state.search_query, card_builder, empty_card_builder)
+    page.update()
+
+
+def handle_favorites_filter_change(
+    page: ft.Page,
+    state: QRStoreState,
+    favorites_only: bool,
+    card_builder: Callable[[dict], ft.Control],
+    empty_card_builder: Callable[[], ft.Control],
+) -> None:
+    state.favorites_only = favorites_only
+    apply_search(state, state.search_query, card_builder, empty_card_builder)
+    page.update()
+
+
+def handle_sort_change(
+    page: ft.Page,
+    state: QRStoreState,
+    sort_value: str,
+    card_builder: Callable[[dict], ft.Control],
+    empty_card_builder: Callable[[], ft.Control],
+) -> None:
+    state.sort_by, state.sort_ascending = parse_sort_value(sort_value)
+    apply_search(state, state.search_query, card_builder, empty_card_builder)
+    page.update()
+
+
+def toggle_favorite(
+    page: ft.Page,
+    state: QRStoreState,
+    db,
+    qr_id: int,
+    card_builder: Callable[[dict], ft.Control],
+    empty_card_builder: Callable[[], ft.Control],
+) -> None:
+    current = next((qr for qr in state.saved_qr_codes if qr.get("id") == qr_id), None)
+    if current is None:
+        return
+
+    new_value = not bool(current.get("is_favorite"))
+    db.set_favorite(qr_id, new_value)
+    current["is_favorite"] = new_value
+    apply_search(state, state.search_query, card_builder, empty_card_builder)
+    page.update()
+
 
 def delete_qr_code(page: ft.Page, state: QRStoreState, db, qr_id: int) -> None:
     """Deletes a QR code from the DB and updates the local UI state."""

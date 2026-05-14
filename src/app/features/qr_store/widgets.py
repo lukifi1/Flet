@@ -117,13 +117,22 @@ def build_preview_dialog(preview_img: ft.Image, on_close) -> ft.AlertDialog:
     )
 
 
-def build_qr_item_card(qr_data: dict, qr_preview_src: str, on_view_click, on_delete_click) -> ft.Control:
+def build_qr_item_card(
+    qr_data: dict,
+    qr_preview_src: str,
+    on_view_click,
+    on_favorite_click,
+    on_delete_click,
+) -> ft.Control:
     qr_id = qr_data.get("id")
     data = qr_data.get("data", "")[:50]
     qr_type = qr_data.get("qr_type", "Text")
     created_at = qr_data.get("created_at", "")
     category_name = qr_data.get("category_name") or "General"
     is_favorite = bool(qr_data.get("is_favorite"))
+
+    favorite_icon = ft.Icons.FAVORITE if is_favorite else ft.Icons.FAVORITE_BORDER
+    favorite_color = ft.Colors.RED_400 if is_favorite else UI_TEXT_MUTED
 
     details_controls: list[ft.Control] = [
         ft.Text(f"ID: {qr_id}", size=14, weight=ft.FontWeight.W_600, color=UI_TEXT_DARK),
@@ -146,6 +155,12 @@ def build_qr_item_card(qr_data: dict, qr_preview_src: str, on_view_click, on_del
                 color=ft.Colors.WHITE,
                 bgcolor=UI_BUTTON_BG,
                 on_click=on_view_click,
+            ),
+            ft.IconButton(
+                icon=favorite_icon,
+                icon_color=favorite_color,
+                tooltip="Toggle favorite",
+                on_click=on_favorite_click,
             ),
             ft.IconButton(
                 icon=ft.Icons.DELETE_OUTLINE,

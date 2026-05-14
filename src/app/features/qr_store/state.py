@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Optional
 
 import flet as ft
 
@@ -13,3 +14,12 @@ class QRStoreState:
     list_view: ft.ListView
     result_count: ft.Text
     search_field: ft.TextField
+
+    search_query: str = ""
+    category_filter: str = "All"
+    favorites_only: bool = False
+    sort_by: str = "created_at"
+    sort_ascending: bool = False
+    filter_dropdown: Optional[ft.Dropdown] = None
+    favorites_checkbox: Optional[ft.Checkbox] = None
+    sort_dropdown: Optional[ft.Dropdown] = None
