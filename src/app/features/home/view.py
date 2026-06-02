@@ -79,22 +79,17 @@ def home_view(page: ft.Page):
         content_padding=ft.Padding.symmetric(horizontal=12, vertical=10),
     )
 
-
-    favorite_checkbox = ft.Checkbox(
-        label="Favorite",
-        value=False,
-        label_style=ft.TextStyle(
-            color=UI_TEXT_DARK,
-            size=13,
-            weight=ft.FontWeight.W_500,
-        ),
+    favorite_checkbox = ft.IconButton(
+        icon=ft.Icons.FAVORITE_BORDER,
+        icon_color=ft.Colors.GREY_500,
+        tooltip="Favorite",
     )
 
     category_and_favorite_row = ft.Row(
         [
             category_dropdown,
             ft.Container(
-                width=135,
+                width=80,
                 content=favorite_checkbox,
             ),
         ],
@@ -164,10 +159,11 @@ def home_view(page: ft.Page):
         "Share",
         height=44,
         color=ft.Colors.WHITE,
-        bgcolor=ft.Colors.BLACK,
+        bgcolor=ft.Colors.GREY_400,
         style=ft.ButtonStyle(
             shape=ft.RoundedRectangleBorder(radius=UI_BUTTON_RADIUS),
         ),
+        disabled=True,
     )
 
     buttons_row = ft.Row(
@@ -216,10 +212,26 @@ def home_view(page: ft.Page):
         generate_button=generate_button,
         img=img,
         save_button=save_button,
+        share_button=share_button,
         share=share,
         category_dropdown=category_dropdown,
         favorite_checkbox=favorite_checkbox,
     )
+
+    def toggle_favorite(e):
+        if favorite_checkbox.icon == ft.Icons.FAVORITE_BORDER:
+            favorite_checkbox.icon = ft.Icons.FAVORITE
+            favorite_checkbox.icon_color = ft.Colors.RED_400
+            favorite_checkbox.data = True
+        else:
+            favorite_checkbox.icon = ft.Icons.FAVORITE_BORDER
+            favorite_checkbox.icon_color = ft.Colors.GREY_500
+            favorite_checkbox.data = False
+
+        page.update()
+
+    favorite_checkbox.data = False
+    favorite_checkbox.on_click = toggle_favorite
 
     # ================== EVENT HANDLERS ==================
 

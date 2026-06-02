@@ -15,9 +15,10 @@ class HomeState:
     generate_button: ft.Button
     img: ft.Image  # Holds the generated QR code image
     save_button: ft.Button
+    share_button: ft.Button
     share: ft.Share  # For sharing the generated QR code
     category_dropdown: ft.Dropdown
-    favorite_checkbox: ft.Checkbox
+    favorite_checkbox: ft.IconButton
 
     qr_code_data: str = ""
 

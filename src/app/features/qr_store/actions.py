@@ -15,6 +15,7 @@ def show_qr_detail(page: ft.Page, state: QRStoreState, db, qr_code_id: int) -> N
     detail = db.get_qr_code(qr_code_id)
     if detail and detail.get("binary_data"):
         state.preview_img.src = base64.b64encode(detail["binary_data"]).decode()
+        state.preview_text.value = detail.get("data", "")
         state.preview_dialog.open = True
         page.update()
 

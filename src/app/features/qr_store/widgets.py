@@ -79,7 +79,7 @@ def build_empty_saved_codes_view(route: str) -> ft.View:
     )
 
 
-def build_preview_dialog(preview_img: ft.Image, on_close) -> ft.AlertDialog:
+def build_preview_dialog(preview_img: ft.Image, preview_text: ft.Text, on_close) -> ft.AlertDialog:
     return ft.AlertDialog(
         modal=True,
         bgcolor=UI_CARD_BG,
@@ -105,9 +105,21 @@ def build_preview_dialog(preview_img: ft.Image, on_close) -> ft.AlertDialog:
                         padding=14,
                         bgcolor=ft.Colors.WHITE,
                         border_radius=16,
-                        content=ft.Row(
-                            [preview_img],
-                            alignment=ft.MainAxisAlignment.CENTER,
+                        content=ft.Column(
+                            [
+                                ft.Row(
+                                    [preview_img],
+                                    alignment=ft.MainAxisAlignment.CENTER,
+                                ),
+                                ft.Container(height=12),
+                                ft.Text(
+                                    "QR Content:",
+                                    weight=ft.FontWeight.BOLD,
+                                    size=13,
+                                ),
+                                preview_text,
+                            ],
+                            spacing=0,
                         ),
                     ),
                 ],

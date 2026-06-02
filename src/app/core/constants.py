@@ -146,7 +146,7 @@ QR_CODE_CATEGORIES = [
 # ====================================
 
 # Path to logo image asset
-LOGO_PATH = "assets/logo-color.png"
+LOGO_PATH = "src/assets/logo-color.png"
 # Logo area as a ratio of QR code size in percentage
 LOGO_AREA_RATIO = 0.22
 # Logo padding as a ratio of logo size

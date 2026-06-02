@@ -10,6 +10,7 @@ class QRStoreState:
 
     saved_qr_codes: list[dict]
     preview_img: ft.Image
+    preview_text: ft.Text
     preview_dialog: ft.AlertDialog
     list_view: ft.ListView
     result_count: ft.Text

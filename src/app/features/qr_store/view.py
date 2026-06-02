@@ -48,6 +48,12 @@ def my_codes_view(page: ft.Page) -> ft.View:
         fit=ft.BoxFit.CONTAIN,
     )
 
+    preview_text = ft.Text(
+        "",
+        selectable=True,
+        size=12,
+    )
+
     placeholder_dialog = ft.AlertDialog(modal=True)
     list_view = ft.ListView(
         expand=True, spacing=12, scroll=ft.ScrollMode.AUTO, controls=[]
@@ -105,6 +111,7 @@ def my_codes_view(page: ft.Page) -> ft.View:
     state = QRStoreState(
         saved_qr_codes=saved_qr_codes,
         preview_img=preview_img,
+        preview_text=preview_text,
         preview_dialog=placeholder_dialog,
         list_view=list_view,
         result_count=result_count,
@@ -116,6 +123,7 @@ def my_codes_view(page: ft.Page) -> ft.View:
 
     state.preview_dialog = build_preview_dialog(
         preview_img=state.preview_img,
+        preview_text=state.preview_text,
         on_close=lambda e: close_preview(page, state, e),
     )
 
