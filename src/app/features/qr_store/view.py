@@ -136,10 +136,13 @@ def my_codes_view(page: ft.Page) -> ft.View:
 
         def handle_delete(_):
             from .actions import delete_qr_code
-            delete_qr_code(page, state, db, qr_id)
-            handle_search_change(
-                page, state, state.search_field.value or "",
-                card_builder, build_empty_results_card
+            delete_qr_code(
+                page=page,
+                state=state,
+                db=db,
+                qr_id=qr_id,
+                card_builder=card_builder,
+                empty_card_builder=build_empty_results_card,
             )
 
         def handle_favorite_toggle(_):

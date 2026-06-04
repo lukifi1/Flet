@@ -172,17 +172,61 @@ def toggle_favorite(
     page.update()
 
 
-def delete_qr_code(page: ft.Page, state: QRStoreState, db, qr_id: int) -> None:
-    """Deletes a QR code from the DB and updates the local UI state."""
-    try:
-        db.delete_qr_code(qr_id)
-        
-        state.saved_qr_codes = [qr for qr in state.saved_qr_codes if qr.get("id") != qr_id]
-        
-        if not state.saved_qr_codes:
-            page.go("/my-codes")
-        else:
-            page.update()
-            
-    except Exception as e:
-        print(f"Error deleting QR code: {e}")
+def delete_qr_code(
+        page: ft.Page,
+        state: QRStoreState,
+        db,
+        qr_id: int,
+        card_builder: Callable[[dict], ft.Control],
+        empty_card_builder: Callable[[], ft.Control],
+) -> None:
+    """Asks for confirmation, then deletes a QR code and updates the UI."""
+
+    def close_dialog(_e=None) -> None:
+        # The No button and dismiss action only close the confirmation popup.
+        modal_dialog.open = False
+        page.update()
+
+    def confirm_delete(_e=None) -> None:
+        try:
+            # Only the Yes button reaches this point and performs the DB delete.
+            modal_dialog.open = False
+            db.delete_qr_code(qr_id)
+
+            # Keep the local list in sync with the database after deleting.
+            state.saved_qr_codes = [
+                qr for qr in state.saved_qr_codes if qr.get("id") != qr_id
+            ]
+
+            if not state.saved_qr_codes:
+                page.go("/my-codes")
+            else:
+                # Rebuild the visible list so search/filter/sort stay applied.
+                apply_search(
+                    state,
+                    state.search_field.value or "",
+                    card_builder,
+                    empty_card_builder,
+                    )
+                page.update()
+
+        except Exception as e:
+            print(f"Error deleting QR code: {e}")
+
+    # Confirmation dialog shown after the user presses the delete icon.
+    modal_dialog = ft.AlertDialog(
+        modal=True,
+        title=ft.Text("Please confirm"),
+        content=ft.Text(f"Are you sure you want to delete QR code: {qr_id}?"),
+        actions=[
+            ft.TextButton("Yes", on_click=confirm_delete),
+            ft.TextButton("No", on_click=close_dialog),
+        ],
+        actions_alignment=ft.MainAxisAlignment.END,
+        on_dismiss=close_dialog,
+    )
+
+    if modal_dialog not in page.overlay:
+        page.overlay.append(modal_dialog)
+    modal_dialog.open = True
+    page.update()
