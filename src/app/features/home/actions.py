@@ -8,7 +8,6 @@ from app.core.qr_generator import generate_and_save_qr, make_qr_png_bytes
 from app.core.utils import (
     get_qrcode_type,
     prepend_uri_scheme,
-    qrcode_get_data_info,
     qrcode_get_ecc_level,
 )
 
@@ -47,13 +46,17 @@ def handle_input_change(e: ft.Event[ft.TextField], page: ft.Page, state: HomeSta
     state.badge_type.value = qrcode_type.value
 
     ecc_level = qrcode_get_ecc_level(text)
-    state.ecc_type.value = ecc_level.value
-    state.ecc_badge.bgcolor = QR_ECC_LEVEL_COLORS[ecc_level]
+    max_bytes = QR_LIMITS.get(ecc_level, 1273)
+    ratio = min(length_bytes / max_bytes, 1.0)
 
-    state.char_info.value = str(qrcode_get_data_info(text))
-    state.char_info.color = QR_ECC_LEVEL_COLORS[ecc_level]
+    exceeded = length_bytes > max_bytes
 
-    state.generate_button.disabled = length_bytes > QR_LIMITS.get(ecc_level, 0)
+    state.capacity_label.value = f"{int(ratio * 100)}%"
+    state.capacity_bar.value = ratio
+    state.capacity_bar.color = QR_ECC_LEVEL_COLORS[ecc_level]
+    state.capacity_warning.visible = exceeded
+
+    state.generate_button.disabled = exceeded
     page.update()
 
 

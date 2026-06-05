@@ -5,7 +5,6 @@ import flet as ft
 
 from app.core.constants import (
     QR_CODE_CATEGORIES,
-    QR_ECC_LEVEL_COLORS,
     QR_NO_DATA_IMAGE,
     UI_BUTTON_BG,
     UI_BUTTON_RADIUS,
@@ -20,7 +19,6 @@ from app.core.constants import (
     QRCodeDataType,
 )
 from app.core.logger import get_logger
-from app.core.utils import qrcode_get_ecc_level
 
 from .actions import (
     do_share_qrcode,
@@ -105,19 +103,10 @@ def home_view(page: ft.Page):
         border_radius=20,
     )
 
-    ecc_type = ft.Text("H", color=UI_TEXT_LIGHT, size=12)
-    ecc_badge = ft.Container(
-        content=ecc_type,
-        bgcolor=QR_ECC_LEVEL_COLORS[qrcode_get_ecc_level("")],
-        padding=ft.Padding.symmetric(vertical=4, horizontal=10),
-        border_radius=20,
-    )
     badges_row = ft.Row(
         [
             ft.Text("Format:", weight=ft.FontWeight.W_500, color=UI_TEXT_DARK),
             badge,
-            ft.Text("ECC:", weight=ft.FontWeight.W_500, color=UI_TEXT_DARK),
-            ecc_badge,
         ],
         spacing=8,
         alignment=ft.MainAxisAlignment.START,
@@ -131,7 +120,35 @@ def home_view(page: ft.Page):
         border_radius=14,
     )
 
-    char_info = ft.Text("", size=12, color=UI_TEXT_DARK)
+    capacity_label = ft.Text("0%", size=12, color=UI_TEXT_DARK)
+    capacity_bar = ft.ProgressBar(
+        value=0,
+        width=316,
+        height=6,
+        color=ft.Colors.GREEN_500,
+        bgcolor=ft.Colors.GREY_200,
+        border_radius=3,
+    )
+    capacity_warning = ft.Text(
+        "Zu viele Zeichen – bitte kürze den Text.",
+        size=11,
+        color=ft.Colors.RED_600,
+        visible=False,
+    )
+    char_info = ft.Column(
+        [
+            ft.Row(
+                [
+                    ft.Text("Kapazität:", size=12, weight=ft.FontWeight.W_500, color=UI_TEXT_DARK),
+                    capacity_label,
+                ],
+                alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+            ),
+            capacity_bar,
+            capacity_warning,
+        ],
+        spacing=4,
+    )
 
     generate_button = ft.Button(
         "Generate",
@@ -206,9 +223,9 @@ def home_view(page: ft.Page):
     state = HomeState(
         input_field=input_field,
         badge_type=badge_type,
-        ecc_type=ecc_type,
-        ecc_badge=ecc_badge,
-        char_info=char_info,
+        capacity_label=capacity_label,
+        capacity_bar=capacity_bar,
+        capacity_warning=capacity_warning,
         generate_button=generate_button,
         img=img,
         save_button=save_button,
