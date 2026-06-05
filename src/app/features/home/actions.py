@@ -2,13 +2,12 @@ import base64
 
 import flet as ft
 
-from app.core.constants import LOGO_PATH, QR_ECC_LEVEL_COLORS, QR_LIMITS
+from app.core.constants import LOGO_PATH
 from app.core.logger import get_logger
 from app.core.qr_generator import generate_and_save_qr, make_qr_png_bytes
 from app.core.utils import (
     get_qrcode_type,
     prepend_uri_scheme,
-    qrcode_get_ecc_level,
 )
 
 from .state import HomeState
@@ -40,23 +39,10 @@ def handle_input_blur(e: ft.Event[ft.TextField], page: ft.Page, state: HomeState
 
 def handle_input_change(e: ft.Event[ft.TextField], page: ft.Page, state: HomeState):
     text = state.input_field.value or ""
-    length_bytes = len(text.encode("utf-8"))
-
     qrcode_type = get_qrcode_type(text)
     state.badge_type.value = qrcode_type.value
 
-    ecc_level = qrcode_get_ecc_level(text)
-    max_bytes = QR_LIMITS.get(ecc_level, 1273)
-    ratio = min(length_bytes / max_bytes, 1.0)
-
-    exceeded = length_bytes > max_bytes
-
-    state.capacity_label.value = f"{int(ratio * 100)}%"
-    state.capacity_bar.value = ratio
-    state.capacity_bar.color = QR_ECC_LEVEL_COLORS[ecc_level]
-    state.capacity_warning.visible = exceeded
-
-    state.generate_button.disabled = exceeded
+    state.generate_button.disabled = False
     page.update()
 
 

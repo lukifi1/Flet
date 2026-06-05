@@ -89,22 +89,6 @@ def home_view(page: ft.Page):
         border_radius=2,
     )
 
-    capacity_label = ft.Text("0%", size=10, color=UI_TEXT_MUTED, style=ft.TextStyle(letter_spacing=1))
-    capacity_bar = ft.ProgressBar(
-        value=0,
-        height=2,
-        color=UI_ACCENT,
-        bgcolor=UI_BORDER,
-        border_radius=0,
-    )
-    capacity_warning = ft.Text(
-        "LIMIT EXCEEDED — SHORTEN YOUR TEXT",
-        size=10,
-        color="#FF4444",
-        style=ft.TextStyle(letter_spacing=1),
-        visible=False,
-    )
-
     generate_button = ft.Button(
         "GENERATE",
         height=44,
@@ -186,7 +170,7 @@ def home_view(page: ft.Page):
                 _divider(),
                 ft.Container(height=14),
 
-                # Format + Capacity
+                # Format
                 ft.Row(
                     [
                         ft.Column(
@@ -197,22 +181,9 @@ def home_view(page: ft.Page):
                             ],
                             spacing=0,
                         ),
-                        ft.Column(
-                            [
-                                _label("CAPACITY"),
-                                ft.Container(height=4),
-                                capacity_label,
-                            ],
-                            spacing=0,
-                            horizontal_alignment=ft.CrossAxisAlignment.END,
-                        ),
                     ],
                     alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                 ),
-                ft.Container(height=8),
-                capacity_bar,
-                ft.Container(height=6),
-                capacity_warning,
             ],
             spacing=0,
         ),
@@ -233,9 +204,6 @@ def home_view(page: ft.Page):
     state = HomeState(
         input_field=input_field,
         badge_type=badge_type,
-        capacity_label=capacity_label,
-        capacity_bar=capacity_bar,
-        capacity_warning=capacity_warning,
         generate_button=generate_button,
         img=img,
         save_button=save_button,

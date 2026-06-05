@@ -9,9 +9,6 @@ class HomeState:
 
     input_field: ft.TextField
     badge_type: ft.Text
-    capacity_label: ft.Text
-    capacity_bar: ft.ProgressBar
-    capacity_warning: ft.Text
     generate_button: ft.Button
     img: ft.Image  # Holds the generated QR code image
     save_button: ft.Button
