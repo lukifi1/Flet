@@ -6,15 +6,14 @@ import flet as ft
 from app.core.constants import (
     QR_CODE_CATEGORIES,
     QR_NO_DATA_IMAGE,
-    UI_BUTTON_BG,
+    UI_ACCENT,
+    UI_BORDER,
     UI_BUTTON_RADIUS,
     UI_CARD_BG,
-    UI_CORNER_RADIUS,
     UI_INPUT_BG,
-    UI_INPUT_RADIUS,
     UI_PAGE_BG,
-    UI_SUCCESS_BG,
     UI_TEXT_DARK,
+    UI_TEXT_MUTED,
     UI_TEXT_LIGHT,
     QRCodeDataType,
 )
@@ -33,138 +32,94 @@ from .state import HomeState
 log = get_logger(__name__)
 
 
+def _divider():
+    return ft.Container(height=1, bgcolor=UI_BORDER)
+
+
+def _label(text):
+    return ft.Text(text, size=10, color=UI_TEXT_MUTED, weight=ft.FontWeight.W_500, style=ft.TextStyle(letter_spacing=1.5))
+
+
 def home_view(page: ft.Page):
     page.theme_mode = ft.ThemeMode.LIGHT
-    title = ft.Text(
-        "QR - Code Generator",
-        size=22,
-        weight=ft.FontWeight.W_600,
-        color=UI_TEXT_DARK,
-    )
+
     # ================== INPUT SECTION ==================
     input_field = ft.TextField(
-        hint_text="Input",
+        hint_text="ENTER TEXT TO ENCODE",
         multiline=True,
         min_lines=2,
         max_lines=3,
-        bgcolor=UI_INPUT_BG,
-        color=UI_TEXT_LIGHT,
-        border_radius=UI_INPUT_RADIUS,
+        bgcolor=ft.Colors.TRANSPARENT,
+        color=UI_TEXT_DARK,
         border_color=ft.Colors.TRANSPARENT,
         focused_border_color=ft.Colors.TRANSPARENT,
-        cursor_color=UI_TEXT_LIGHT,
-        hint_style=ft.TextStyle(
-            color=UI_TEXT_LIGHT,
-            size=12,
-            weight=ft.FontWeight.W_600,
-        ),
-        text_size=14,
-        content_padding=ft.Padding.symmetric(horizontal=16, vertical=12),
+        cursor_color=UI_ACCENT,
+        hint_style=ft.TextStyle(color=UI_TEXT_MUTED, size=11, letter_spacing=1.5),
+        text_size=13,
+        content_padding=ft.Padding.symmetric(horizontal=0, vertical=8),
     )
 
     category_dropdown = ft.Dropdown(
-        width=190,
+        width=180,
         value="General",
-        label="Category",
-        hint_text="Select category",
-        options=[ft.dropdown.Option(category) for category in QR_CODE_CATEGORIES],
-        bgcolor=ft.Colors.WHITE,
+        options=[ft.dropdown.Option(c) for c in QR_CODE_CATEGORIES],
+        bgcolor=UI_INPUT_BG,
         color=UI_TEXT_DARK,
-        border_radius=UI_INPUT_RADIUS,
-        border_color=UI_INPUT_BG,
-        focused_border_color=UI_BUTTON_BG,
-        text_size=13,
-        content_padding=ft.Padding.symmetric(horizontal=12, vertical=10),
+        border_radius=2,
+        border_color=UI_BORDER,
+        focused_border_color=UI_ACCENT,
+        text_size=12,
+        content_padding=ft.Padding.symmetric(horizontal=10, vertical=8),
     )
 
     favorite_checkbox = ft.IconButton(
         icon=ft.Icons.FAVORITE_BORDER,
-        icon_color=ft.Colors.GREY_500,
+        icon_color=UI_TEXT_MUTED,
+        icon_size=18,
         tooltip="Favorite",
     )
 
-    category_and_favorite_row = ft.Row(
-        [
-            category_dropdown,
-            ft.Container(
-                width=80,
-                content=favorite_checkbox,
-            ),
-        ],
-        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-        vertical_alignment=ft.CrossAxisAlignment.CENTER,
-    )
-
-    badge_type = ft.Text(QRCodeDataType.TEXT.value, color=UI_TEXT_LIGHT, size=12)
-    badge = ft.Container(
-        content=badge_type,
-        bgcolor=ft.Colors.BLUE_600,
-        padding=ft.Padding.symmetric(vertical=4, horizontal=10),
-        border_radius=20,
-    )
-
-    badges_row = ft.Row(
-        [
-            ft.Text("Format:", weight=ft.FontWeight.W_500, color=UI_TEXT_DARK),
-            badge,
-        ],
-        spacing=8,
-        alignment=ft.MainAxisAlignment.START,
-    )
+    badge_type = ft.Text(QRCodeDataType.TEXT.value.upper(), color=UI_ACCENT, size=10, style=ft.TextStyle(letter_spacing=1.5))
 
     img = ft.Image(
         src=QR_NO_DATA_IMAGE,
-        width=220,
-        height=220,
+        width=200,
+        height=200,
         fit=ft.BoxFit.CONTAIN,
-        border_radius=14,
+        border_radius=2,
     )
 
-    capacity_label = ft.Text("0%", size=12, color=UI_TEXT_DARK)
+    capacity_label = ft.Text("0%", size=10, color=UI_TEXT_MUTED, style=ft.TextStyle(letter_spacing=1))
     capacity_bar = ft.ProgressBar(
         value=0,
-        width=316,
-        height=6,
-        color=ft.Colors.GREEN_500,
-        bgcolor=ft.Colors.GREY_200,
-        border_radius=3,
+        height=2,
+        color=UI_ACCENT,
+        bgcolor=UI_BORDER,
+        border_radius=0,
     )
     capacity_warning = ft.Text(
-        "Zu viele Zeichen – bitte kürze den Text.",
-        size=11,
-        color=ft.Colors.RED_600,
+        "LIMIT EXCEEDED — SHORTEN YOUR TEXT",
+        size=10,
+        color="#FF4444",
+        style=ft.TextStyle(letter_spacing=1),
         visible=False,
-    )
-    char_info = ft.Column(
-        [
-            ft.Row(
-                [
-                    ft.Text("Kapazität:", size=12, weight=ft.FontWeight.W_500, color=UI_TEXT_DARK),
-                    capacity_label,
-                ],
-                alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-            ),
-            capacity_bar,
-            capacity_warning,
-        ],
-        spacing=4,
     )
 
     generate_button = ft.Button(
-        "Generate",
+        "GENERATE",
         height=44,
-        color=ft.Colors.WHITE,
-        bgcolor=ft.Colors.BLACK,
+        color=UI_TEXT_LIGHT,
+        bgcolor=UI_ACCENT,
         style=ft.ButtonStyle(
             shape=ft.RoundedRectangleBorder(radius=UI_BUTTON_RADIUS),
         ),
     )
 
     save_button = ft.Button(
-        "Save",
+        "SAVE",
         height=44,
-        color=ft.Colors.WHITE,
-        bgcolor=ft.Colors.GREY_400,
+        color=UI_TEXT_MUTED,
+        bgcolor=UI_INPUT_BG,
         style=ft.ButtonStyle(
             shape=ft.RoundedRectangleBorder(radius=UI_BUTTON_RADIUS),
         ),
@@ -173,49 +128,104 @@ def home_view(page: ft.Page):
 
     share = ft.Share()
     share_button = ft.Button(
-        "Share",
+        "SHARE",
         height=44,
-        color=ft.Colors.WHITE,
-        bgcolor=ft.Colors.GREY_400,
+        color=UI_TEXT_MUTED,
+        bgcolor=UI_INPUT_BG,
         style=ft.ButtonStyle(
             shape=ft.RoundedRectangleBorder(radius=UI_BUTTON_RADIUS),
         ),
         disabled=True,
     )
 
-    buttons_row = ft.Row(
-        [
-            ft.Container(width=112, content=generate_button),
-            ft.Container(width=112, content=save_button),
-            ft.Container(width=112, content=share_button),
-        ],
-        alignment=ft.MainAxisAlignment.CENTER,
-        spacing=12,
-    )
-
     main_card = ft.Container(
         width=360,
         bgcolor=UI_CARD_BG,
-        border_radius=UI_CORNER_RADIUS,
-        padding=ft.Padding.symmetric(horizontal=22, vertical=18),
+        border_radius=2,
+        border=ft.border.all(1, UI_BORDER),
+        padding=ft.Padding.symmetric(horizontal=24, vertical=20),
         content=ft.Column(
             [
-                ft.Container(height=4),
-                ft.Row(
-                    [img],
-                    alignment=ft.MainAxisAlignment.CENTER,
-                ),
-                ft.Container(height=12),
+                # QR image
+                ft.Row([img], alignment=ft.MainAxisAlignment.CENTER),
+                ft.Container(height=20),
+                _divider(),
+                ft.Container(height=16),
+
+                # Input
+                _label("INPUT"),
+                ft.Container(height=6),
                 input_field,
-                ft.Container(height=10),
-                category_and_favorite_row,
+                _divider(),
+                ft.Container(height=14),
+
+                # Category + Favorite
+                ft.Row(
+                    [
+                        ft.Column(
+                            [
+                                _label("CATEGORY"),
+                                ft.Container(height=4),
+                                category_dropdown,
+                            ],
+                            spacing=0,
+                        ),
+                        ft.Column(
+                            [
+                                _label("FAVORITE"),
+                                favorite_checkbox,
+                            ],
+                            spacing=0,
+                            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                        ),
+                    ],
+                    alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                    vertical_alignment=ft.CrossAxisAlignment.START,
+                ),
+                ft.Container(height=16),
+                _divider(),
+                ft.Container(height=14),
+
+                # Format + Capacity
+                ft.Row(
+                    [
+                        ft.Column(
+                            [
+                                _label("FORMAT"),
+                                ft.Container(height=4),
+                                badge_type,
+                            ],
+                            spacing=0,
+                        ),
+                        ft.Column(
+                            [
+                                _label("CAPACITY"),
+                                ft.Container(height=4),
+                                capacity_label,
+                            ],
+                            spacing=0,
+                            horizontal_alignment=ft.CrossAxisAlignment.END,
+                        ),
+                    ],
+                    alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                ),
                 ft.Container(height=8),
-                char_info,
-                ft.Container(height=8),
-                badges_row,
+                capacity_bar,
+                ft.Container(height=6),
+                capacity_warning,
             ],
             spacing=0,
         ),
+    )
+
+    generate_button.width = 150
+    save_button.width = 96
+    share_button.width = 96
+
+    buttons_row = ft.Row(
+        [generate_button, save_button, share_button],
+        alignment=ft.MainAxisAlignment.CENTER,
+        spacing=8,
     )
 
     # ================== STATE INITIALIZATION ==================
@@ -242,9 +252,8 @@ def home_view(page: ft.Page):
             favorite_checkbox.data = True
         else:
             favorite_checkbox.icon = ft.Icons.FAVORITE_BORDER
-            favorite_checkbox.icon_color = ft.Colors.GREY_500
+            favorite_checkbox.icon_color = UI_TEXT_MUTED
             favorite_checkbox.data = False
-
         page.update()
 
     favorite_checkbox.data = False
@@ -257,7 +266,6 @@ def home_view(page: ft.Page):
     input_field.on_change = lambda e: handle_input_change(e, page, state)
 
     generate_button.on_click = lambda e: gen(page, state)
-
     save_button.on_click = lambda e: save_qr_code(page, state)
     share_button.on_click = lambda e: asyncio.create_task(do_share_qrcode(state))
 
@@ -266,20 +274,26 @@ def home_view(page: ft.Page):
         route="/",
         bgcolor=UI_PAGE_BG,
         controls=[
-            ft.Container(
-                padding=ft.Padding.symmetric(horizontal=20, vertical=18),
-                content=ft.Column(
-                    [
-                        ft.Container(height=6),
-                        title,
-                        ft.Container(height=16),
-                        main_card,
-                        ft.Container(height=18),
-                        ft.Container(width=360, content=buttons_row),
-                        ft.Container(height=8),
-                    ],
-                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                ),
+            ft.SafeArea(
+                ft.Container(
+                    padding=ft.Padding.symmetric(horizontal=20, vertical=24),
+                    content=ft.Column(
+                        [
+                            ft.Row(
+                                [
+                                    ft.Text("QR", size=18, weight=ft.FontWeight.W_700, color=UI_ACCENT, style=ft.TextStyle(letter_spacing=4)),
+                                    ft.Text("GENERATOR", size=18, weight=ft.FontWeight.W_300, color=UI_TEXT_DARK, style=ft.TextStyle(letter_spacing=4)),
+                                ],
+                                spacing=8,
+                            ),
+                            ft.Container(height=20),
+                            main_card,
+                            ft.Container(height=12),
+                            ft.Container(width=360, content=buttons_row),
+                        ],
+                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                    ),
+                )
             )
         ],
     )

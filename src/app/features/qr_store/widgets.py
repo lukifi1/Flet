@@ -239,7 +239,7 @@ def build_search_field(on_change) -> ft.TextField:
         border_radius=14,
         border_color=ft.Colors.TRANSPARENT,
         focused_border_color=ft.Colors.TRANSPARENT,
-        hint_style=ft.TextStyle(color=UI_TEXT_LIGHT, size=12),
+        hint_style=ft.TextStyle(color=UI_TEXT_DARK, size=12),
         content_padding=ft.Padding.symmetric(horizontal=14, vertical=10),
         on_change=on_change,
     )
