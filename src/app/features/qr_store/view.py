@@ -5,12 +5,14 @@ from app.core.db import get_db
 from app.core.logger import get_logger
 
 from .actions import (
+    apply_search,
     close_preview,
     encode_preview_src,
     handle_filter_change,
     handle_favorites_filter_change,
     handle_search_change,
     handle_sort_change,
+    parse_sort_value,
     show_qr_detail,
     toggle_favorite,
 )
@@ -108,6 +110,8 @@ def my_codes_view(page: ft.Page) -> ft.View:
         content_padding=ft.Padding.symmetric(horizontal=12, vertical=10),
     )
 
+    reset_button = ft.ElevatedButton("Reset filters")
+
     state = QRStoreState(
         saved_qr_codes=saved_qr_codes,
         preview_img=preview_img,
@@ -119,6 +123,7 @@ def my_codes_view(page: ft.Page) -> ft.View:
         filter_dropdown=filter_dropdown,
         favorites_checkbox=favorites_checkbox,
         sort_dropdown=sort_dropdown,
+        reset_button=reset_button,
     )
 
     state.preview_dialog = build_preview_dialog(
@@ -201,6 +206,20 @@ def my_codes_view(page: ft.Page) -> ft.View:
         )
     )
 
+    def reset_button_click(_):
+        filter_dropdown.value = "All"
+        favorites_checkbox.value = False
+        sort_dropdown.value = "created_at.desc"
+        state.search_field.value = ""
+        state.search_query = ""
+        state.category_filter = "All"
+        state.favorites_only = False
+        state.sort_by, state.sort_ascending = parse_sort_value("created_at.desc")
+        apply_search(state, state.search_query, card_builder, build_empty_results_card)
+        page.update()
+
+    reset_button.on_click = reset_button_click
+
     handle_search_change(
         page=page,
         state=state,
@@ -208,6 +227,8 @@ def my_codes_view(page: ft.Page) -> ft.View:
         card_builder=card_builder,
         empty_card_builder=build_empty_results_card,
     )
+
+    
 
     return ft.View(
         route=ROUTE,
@@ -226,12 +247,29 @@ def my_codes_view(page: ft.Page) -> ft.View:
                                 color=UI_TEXT_DARK,
                             ),
                             ft.Row(
-                                [filter_dropdown, favorites_checkbox, sort_dropdown],
-                                alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-                                spacing=12,
+                                controls=[
+                                     ft.Container(
+                                        content=state.search_field,
+                                        expand=True,
+                                    ),
+                                    filter_dropdown,
+                                    sort_dropdown,
+                                    favorites_checkbox
+                                ],
+                              
+                               
+                                alignment=ft.MainAxisAlignment.START,
+                                spacing=5,
                             ),
-                            state.search_field,
-                            state.result_count,
+                            
+                            ft.Row(
+                                controls=[state.result_count,
+                                          ft.Container(expand=True),
+                                          reset_button,],                            
+                                alignment=ft.MainAxisAlignment.START,
+                            ),
+                            
+
                             ft.Divider(height=12, thickness=1, color=UI_TEXT_DARK),
                             ft.Container(expand=True, content=state.list_view),
                         ],

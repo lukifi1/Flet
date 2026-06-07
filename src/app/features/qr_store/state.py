@@ -24,3 +24,4 @@ class QRStoreState:
     filter_dropdown: Optional[ft.Dropdown] = None
     favorites_checkbox: Optional[ft.Checkbox] = None
     sort_dropdown: Optional[ft.Dropdown] = None
+    reset_button: Optional[ft.ElevatedButton] = None

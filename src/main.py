@@ -15,4 +15,4 @@ if __name__ == "__main__":
     log.info("APPLICATION STARTED")
     log.info("════════════════════════════════════════════")
     
-    ft.run(main, assets_dir="assets")
+    ft.run(main, assets_dir="assets", view=ft.AppView.WEB_BROWSER)
