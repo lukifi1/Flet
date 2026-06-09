@@ -173,12 +173,12 @@ def toggle_favorite(
 
 
 def delete_qr_code(
-        page: ft.Page,
-        state: QRStoreState,
-        db,
-        qr_id: int,
-        card_builder: Callable[[dict], ft.Control],
-        empty_card_builder: Callable[[], ft.Control],
+    page: ft.Page,
+    state: QRStoreState,
+    db,
+    qr_id: int,
+    card_builder: Callable[[dict], ft.Control],
+    empty_card_builder: Callable[[], ft.Control],
 ) -> None:
     """Asks for confirmation, then deletes a QR code and updates the UI."""
 
@@ -198,17 +198,18 @@ def delete_qr_code(
                 qr for qr in state.saved_qr_codes if qr.get("id") != qr_id
             ]
 
-            if not state.saved_qr_codes:
-                page.go("/my-codes")
-            else:
-                # Rebuild the visible list so search/filter/sort stay applied.
-                apply_search(
-                    state,
-                    state.search_field.value or "",
-                    card_builder,
-                    empty_card_builder,
-                    )
-                page.update()
+            # Rebuild the visible list so search/filter/sort stay applied.
+            apply_search(
+                state,
+                state.search_query,
+                card_builder,
+                empty_card_builder,
+            )
+
+            # Force the current route to rebuild so the visible My Codes view
+            # reflects the deleted item immediately.
+            page.go(page.route)
+            page.update()
 
         except Exception as e:
             print(f"Error deleting QR code: {e}")
