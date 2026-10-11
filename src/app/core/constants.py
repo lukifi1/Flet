@@ -4,6 +4,11 @@ from enum import Enum
 import flet as ft
 import qrcode
 import qrcode.constants
+from pathlib import Path
+
+
+SRC_DIR = Path(__file__).resolve().parent.parent.parent  # src/ for src/app/core/<file>.py
+ASSETS_DIR = SRC_DIR / "assets"
 
 # Transparent 1x1 PNG image byte data
 TRANSPARENT_PNG = b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x06\x00\x00\x00\x1f\x15\xc4\x89\x00\x00\x00\nIDATx\x9cc``\x00\x00\x00\x02\x00\x01\xe2!\xbc3\x00\x00\x00\x00IEND\xaeB`\x82"
@@ -146,7 +151,7 @@ QR_CODE_CATEGORIES = [
 # ====================================
 
 # Path to logo image asset
-LOGO_PATH = "src/assets/logo-color.png"
+LOGO_PATH = str(ASSETS_DIR / "logo-color.png")
 # Logo area as a ratio of QR code size in percentage
 LOGO_AREA_RATIO = 0.22
 # Logo padding as a ratio of logo size

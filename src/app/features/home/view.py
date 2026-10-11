@@ -126,7 +126,7 @@ def home_view(page: ft.Page):
         width=360,
         bgcolor=UI_CARD_BG,
         border_radius=2,
-        border=ft.border.all(1, UI_BORDER),
+        border=ft.Border.all(1, UI_BORDER),
         padding=ft.Padding.symmetric(horizontal=24, vertical=20),
         content=ft.Column(
             [

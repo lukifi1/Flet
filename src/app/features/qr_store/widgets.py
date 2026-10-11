@@ -160,7 +160,7 @@ def build_qr_item_card(
         ft.Text(f"Date: {created_at[:10] if created_at else 'N/A'}", size=11, color=UI_TEXT_MUTED),
         ft.Container(height=10),
         ft.Row([
-            ft.ElevatedButton(
+            ft.Button(
                 "View",
                 height=32,
                 width=90,

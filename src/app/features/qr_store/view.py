@@ -110,7 +110,7 @@ def my_codes_view(page: ft.Page) -> ft.View:
         content_padding=ft.Padding.symmetric(horizontal=12, vertical=10),
     )
 
-    reset_button = ft.ElevatedButton("Reset filters")
+    reset_button = ft.Button("Reset filters")
 
     state = QRStoreState(
         saved_qr_codes=saved_qr_codes,
