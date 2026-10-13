@@ -235,7 +235,7 @@ def build_search_field(on_change) -> ft.TextField:
         hint_text="Search by ID, type, data, or date",
         prefix_icon=ft.Icons.SEARCH,
         bgcolor=UI_INPUT_BG,
-        color=UI_TEXT_LIGHT,
+        color=UI_TEXT_DARK,
         border_radius=14,
         border_color=ft.Colors.TRANSPARENT,
         focused_border_color=ft.Colors.TRANSPARENT,

@@ -7,13 +7,24 @@ from .state import QRStoreState
 
 
 def close_preview(page: ft.Page, state: QRStoreState, _e=None) -> None:
+    if state.preview_sequence is not None:
+        state.preview_sequence.stop()
     state.preview_dialog.open = False
     page.update()
 
 
 def show_qr_detail(page: ft.Page, state: QRStoreState, db, qr_code_id: int) -> None:
     detail = db.get_qr_code(qr_code_id)
-    if detail and detail.get("binary_data"):
+    if not detail:
+        return
+
+    if detail.get("qr_type") == "Sequence":
+        text = detail.get("data", "")
+        state.preview_text.value = text
+        state.preview_dialog.open = True
+        page.update()
+        page.run_task(state.preview_sequence.play, text)
+    elif detail.get("binary_data"):
         state.preview_img.src = base64.b64encode(detail["binary_data"]).decode()
         state.preview_text.value = detail.get("data", "")
         state.preview_dialog.open = True

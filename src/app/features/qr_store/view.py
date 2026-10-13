@@ -26,6 +26,8 @@ from .widgets import (
     build_search_field,
 )
 
+from app.core.sequence import SequencePlayer
+
 log = get_logger(__name__)
 
 
@@ -125,6 +127,8 @@ def my_codes_view(page: ft.Page) -> ft.View:
         sort_dropdown=sort_dropdown,
         reset_button=reset_button,
     )
+
+    state.preview_sequence = SequencePlayer(preview_img)
 
     state.preview_dialog = build_preview_dialog(
         preview_img=state.preview_img,

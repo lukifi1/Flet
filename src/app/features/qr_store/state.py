@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, Any
 
 import flet as ft
 
@@ -24,4 +24,5 @@ class QRStoreState:
     filter_dropdown: Optional[ft.Dropdown] = None
     favorites_checkbox: Optional[ft.Checkbox] = None
     sort_dropdown: Optional[ft.Dropdown] = None
-    reset_button: Optional[ft.ElevatedButton] = None
+    reset_button: Optional[ft.Button] = None
+    preview_sequence: Optional[Any] = None

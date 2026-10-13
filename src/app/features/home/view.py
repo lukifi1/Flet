@@ -26,8 +26,10 @@ from .actions import (
     handle_input_change,
     handle_input_focus,
     save_qr_code,
+    save_sequence,
 )
 from .state import HomeState
+from app.core.sequence import SequencePlayer
 
 log = get_logger(__name__)
 
@@ -120,6 +122,37 @@ def home_view(page: ft.Page):
             shape=ft.RoundedRectangleBorder(radius=UI_BUTTON_RADIUS),
         ),
         disabled=True,
+    )
+
+    play_button = ft.Button(
+        "PLAY SEQUENCE",
+        width=150,
+        height=44,
+        color=UI_TEXT_LIGHT,
+        bgcolor=UI_ACCENT,
+        style=ft.ButtonStyle(
+            shape=ft.RoundedRectangleBorder(radius=UI_BUTTON_RADIUS),
+        ),
+    )
+
+    stop_button = ft.Button(
+        "STOP",
+        width=96,
+        height=44,
+        color=UI_TEXT_MUTED,
+        bgcolor=UI_INPUT_BG,
+        style=ft.ButtonStyle(
+            shape=ft.RoundedRectangleBorder(radius=UI_BUTTON_RADIUS),
+        ),
+    )
+
+    sequence_status = ft.Text("", size=11, color=UI_TEXT_MUTED)
+    sequence = SequencePlayer(img, sequence_status)
+
+    sequence_row = ft.Row(
+        [play_button, stop_button],
+        alignment=ft.MainAxisAlignment.CENTER,
+        spacing=8,
     )
 
     main_card = ft.Container(
@@ -231,10 +264,34 @@ def home_view(page: ft.Page):
 
     input_field.on_focus = lambda e: handle_input_focus(e, page, state)
     input_field.on_blur = lambda e: handle_input_blur(e, page, state)
-    input_field.on_change = lambda e: handle_input_change(e, page, state)
 
-    generate_button.on_click = lambda e: gen(page, state)
-    save_button.on_click = lambda e: save_qr_code(page, state)
+    def on_input_change(e):
+        sequence.stop()
+        handle_input_change(e, page, state)
+
+    def on_generate(e):
+        sequence.stop()
+        gen(page, state)
+
+    async def on_play(e):
+        text = input_field.value or ""
+        if text.strip():
+            save_button.disabled = False
+            save_button.bgcolor = ft.Colors.BLACK
+            page.update()
+        await sequence.play(text)
+
+    def on_save(e):
+        if sequence.playing:
+            save_sequence(page, state, sequence)
+        else:
+            save_qr_code(page, state)
+
+    input_field.on_change = on_input_change
+    generate_button.on_click = on_generate
+    play_button.on_click = on_play
+    stop_button.on_click = lambda e: sequence.stop(restore=True)
+    save_button.on_click = on_save
     share_button.on_click = lambda e: asyncio.create_task(do_share_qrcode(state))
 
     # ================== VIEW ==================
@@ -258,6 +315,10 @@ def home_view(page: ft.Page):
                             main_card,
                             ft.Container(height=12),
                             ft.Container(width=360, content=buttons_row),
+                            ft.Container(height=8),
+                            ft.Container(width=360, content=sequence_row),
+                            ft.Container(height=6),
+                            sequence_status,
                         ],
                         horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                     ),

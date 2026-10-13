@@ -11,6 +11,7 @@ from app.core.utils import (
 )
 
 from .state import HomeState
+from app.core.db import get_db
 
 log = get_logger(__name__)
 
@@ -21,6 +22,23 @@ def show_snackbar(page: ft.Page, message: str):
     page.overlay.append(snackbar)
     snackbar.open = True
     page.update()
+
+def save_sequence(page: ft.Page, state: HomeState, sequence):
+    try:
+        qr_id = get_db().save_qr_code(
+            data=sequence.text,
+            qr_type="Sequence",
+            ecc_level="M",
+            binary_data=base64.b64decode(sequence.first_image),
+            metadata={"sequence": True},
+            tags=["sequence"],
+            category_name=state.category_dropdown.value or "General",
+            is_favorite=bool(state.favorite_checkbox.data),
+        )
+        show_snackbar(page, f"Sequence saved! (ID: {qr_id})")
+    except Exception as e:
+        log.error(f"Error saving sequence: {e}")
+        show_snackbar(page, f"Error: {e}")
 
 
 # ================== LOGIC (INPUT + QR GENERATION) ==================
