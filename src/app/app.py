@@ -117,6 +117,53 @@ def main(page: ft.Page):
 
     nav_bar.on_change = handle_nav_change
 
+    async def poll_share_intent():
+        log.info("Android share inbox receiver ready")
+        while True:
+            try:
+                for payload in consume_payloads():
+                    files = page.session.store.get("shared_files") or []
+                    messages = []
+                    text = payload.get("text") or ""
+                    for item in payload.get("files", []):
+                        try:
+                            shared_file_text = file_qr_data(item)
+                        except (OSError, ValueError) as exc:
+                            messages.append(str(exc))
+                            log.warning("Shared file rejected: %s", exc)
+                            continue
+                        files.append(item)
+                        messages.append(f"Received and read {item['name']} ({item['size']} bytes)")
+                        log.info("Shared file read: name=%s size=%s path=%s", item["name"], item["size"], item["path"])
+                        if len(payload["files"]) == 1:
+                            text = shared_file_text
+                    for error in payload.get("errors", []):
+                        log.error("Share reception: %s", error)
+                        messages.append(error)
+                    if text:
+                        page.qr_input_text = text
+                        log.info("Received shared text (%d characters)", len(text))
+                        if not messages:
+                            messages.append(f"Received shared text ({len(text)} characters)")
+                    page.session.store.set("shared_files", files)
+                    page.session.store.set("share_debug", "\n".join(messages))
+                    if page.route != "/":
+                        await page.push_route("/")
+                    else:
+                        render_current_route()
+                await asyncio.sleep(0.5)
+            except asyncio.CancelledError:
+                raise
+            except Exception:
+                log.exception("Failed to process shared payload")
+                await asyncio.sleep(2)
+
+    share_task = None
+    def stop_share_poller(e):
+        if share_task is not None:
+            share_task.cancel()
+    page.on_disconnect = stop_share_poller
+
     def render_current_route() -> None:
         try:
             current_view = build_view(page)
@@ -160,3 +207,6 @@ def main(page: ft.Page):
     page.on_route_change = handle_route_change
     page.route = page.route or "/"
     render_current_route()
+
+    if page.platform == ft.PagePlatform.ANDROID and not page.web:
+        share_task = page.run_task(poll_share_intent)
