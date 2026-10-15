@@ -120,6 +120,7 @@ app.*.symbols
 
 # Custom
 .venv/
+.cache/
 __pycache__/
 build/
 dist/
@@ -135,5 +136,5 @@ dist/
 SPRINT1_COMPLETION_REPORT.md
 SPRINT1_DOCUMENTATION.md
 tmp/
-Makefile
 pyproject.toml
+*.log*
