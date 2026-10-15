@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any, Optional, cast
 
 from .config import LOGGING_SHOW_SOURCE_FILE
+from .log_handler import get_memory_handler
 
 VERBOSE_LEVEL = 5
 
@@ -143,35 +144,50 @@ def setup_logging(
     logger = cast(VerboseLogger, logging.getLogger("qr_maker"))
     logger.setLevel(level)
 
-    # Avoid duplicate handlers if called multiple times
-    if logger.handlers:
-        return logger
+    # Prepare log file path
+    log_file = log_dir / "app.log"
+
+    # Avoid duplicate console/file handlers if called multiple times, but always ensure memory handler
+    has_console_handler = any(isinstance(h, logging.StreamHandler) for h in logger.handlers)
+    has_file_handler = any(isinstance(h, logging.handlers.RotatingFileHandler) for h in logger.handlers)
+    has_memory_handler = any(isinstance(h, type(get_memory_handler())) for h in logger.handlers)
 
     # Console handler (INFO and above) with colored output
-    console_handler = logging.StreamHandler(sys.stdout)
-    console_handler.setLevel(
-        logging.DEBUG
-    )  # Capture all levels, formatter controls output
-    console_formatter = ColoredFormatter(show_source_file=LOGGING_SHOW_SOURCE_FILE)
-    console_handler.setFormatter(console_formatter)
+    if not has_console_handler:
+        console_handler = logging.StreamHandler(sys.stdout)
+        console_handler.setLevel(
+            logging.DEBUG
+        )  # Capture all levels, formatter controls output
+        console_formatter = ColoredFormatter(show_source_file=LOGGING_SHOW_SOURCE_FILE)
+        console_handler.setFormatter(console_formatter)
+        logger.addHandler(console_handler)
 
     # File handler (DEBUG and above)
-    log_file = log_dir / "app.log"
-    file_handler = logging.handlers.RotatingFileHandler(
-        log_file,
-        maxBytes=5 * 1024 * 1024,  # 5MB
-        backupCount=3,
-    )
-    file_handler.setLevel(logging.DEBUG)
-    file_formatter = logging.Formatter(
-        "%(asctime)s - %(name)s - %(levelname)s - [%(filename)s:%(lineno)d] - %(message)s"
-    )
-    file_handler.setFormatter(file_formatter)
+    if not has_file_handler:
+        file_handler = logging.handlers.RotatingFileHandler(
+            log_file,
+            maxBytes=5 * 1024 * 1024,  # 5MB
+            backupCount=3,
+        )
+        file_handler.setLevel(logging.DEBUG)
+        file_formatter = logging.Formatter(
+            "%(asctime)s - %(name)s - %(levelname)s - [%(filename)s:%(lineno)d] - %(message)s"
+        )
+        file_handler.setFormatter(file_formatter)
+        logger.addHandler(file_handler)
 
-    logger.addHandler(console_handler)
-    logger.addHandler(file_handler)
+    # Memory handler for in-app log viewer (always add if not present)
+    if not has_memory_handler:
+        memory_handler = get_memory_handler()
+        memory_handler.setLevel(logging.DEBUG)
+        memory_formatter = logging.Formatter(
+            "[%(filename)s:%(lineno)d] %(message)s"
+        )
+        memory_handler.setFormatter(memory_formatter)
+        logger.addHandler(memory_handler)
 
-    logger.info(f"Logging initialized: console + file logs to {log_file}")
+    if not has_console_handler:
+        logger.info(f"Logging initialized: console + file logs to {log_file}")
 
     return logger
 

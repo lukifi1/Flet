@@ -1,6 +1,7 @@
 import traceback
 
 import flet as ft
+import asyncio
 
 from app.core.constants import (
     UI_FONT_FAMILY,
@@ -15,7 +16,10 @@ from app.core.constants import (
     UI_PAGE_TRANSITION_ANIMATION,
 )
 from app.router import build_view
+from app.core.logger import get_logger
+from app.core.share_intent import consume_payloads, file_qr_data
 
+log = get_logger(__name__)
 
 def main(page: ft.Page):
     page.title = "QR Maker"
@@ -46,6 +50,8 @@ def main(page: ft.Page):
             windows=UI_PAGE_TRANSITION_ANIMATION,
         ),
     )
+    
+    # ================== NAV BAR ==================
 
     nav_bar = ft.NavigationBar(
         bgcolor=UI_NAV_BG,
@@ -61,6 +67,11 @@ def main(page: ft.Page):
                 icon=ft.Icon(ft.Icons.QR_CODE_2_OUTLINED, color=UI_NAV_ICON_UNSELECTED),
                 selected_icon=ft.Icon(ft.Icons.QR_CODE_2, color=UI_NAV_ICON_SELECTED),
                 label="My Codes",
+            ),
+            ft.NavigationBarDestination(
+                icon=ft.Icon(ft.Icons.TERMINAL_OUTLINED, color=UI_NAV_ICON_UNSELECTED),
+                selected_icon=ft.Icon(ft.Icons.TERMINAL, color=UI_NAV_ICON_SELECTED),
+                label="Logs",
             ),
         ],
     )
@@ -80,7 +91,12 @@ def main(page: ft.Page):
 
     def set_nav_state(route: str):
         nonlocal syncing_nav_state
-        target_index = 1 if route == "/my-codes" else 0
+        route_to_index = {
+            "/": 0,
+            "/my-codes": 1,
+            "/logs": 2,
+        }
+        target_index = route_to_index.get(route, 0)
         if nav_bar.selected_index != target_index:
             syncing_nav_state = True
             nav_bar.selected_index = target_index
@@ -90,7 +106,12 @@ def main(page: ft.Page):
         nonlocal syncing_nav_state
         if syncing_nav_state:
             return
-        target_route = "/my-codes" if nav_bar.selected_index == 1 else "/"
+        index_to_route = {
+            0: "/",
+            1: "/my-codes",
+            2: "/logs",
+        }
+        target_route = index_to_route.get(nav_bar.selected_index, "/")
         if page.route != target_route:
             page.run_task(push_route_guarded, target_route)
 

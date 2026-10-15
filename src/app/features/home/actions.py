@@ -54,13 +54,16 @@ def handle_input_blur(e: ft.Event[ft.TextField], page: ft.Page, state: HomeState
         state.input_field.hint_text = "Enter"
     page.update()
 
-
-def handle_input_change(e: ft.Event[ft.TextField], page: ft.Page, state: HomeState):
+def sync_input_metadata(state: HomeState):
     text = state.input_field.value or ""
     qrcode_type = get_qrcode_type(text)
     state.badge_type.value = qrcode_type.value
 
-    state.generate_button.disabled = False
+    state.generate_button.disabled = not bool(text.strip())
+
+
+def handle_input_change(e, page: ft.Page, state: HomeState):
+    sync_input_metadata(state)
     page.update()
 
 

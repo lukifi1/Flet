@@ -150,6 +150,9 @@ QR_CODE_CATEGORIES = [
 #       Logo Configuration
 # ====================================
 
+from pathlib import Path
+
+APP_ROOT = Path(__file__).resolve().parents[2]
 # Path to logo image asset
 LOGO_PATH = str(ASSETS_DIR / "logo-color.png")
 # Logo area as a ratio of QR code size in percentage
