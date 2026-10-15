@@ -69,7 +69,7 @@ def my_codes_view(page: ft.Page) -> ft.View:
     )
 
     filter_dropdown = ft.Dropdown(
-        width=170,
+        col={"xs": 6, "sm": 4, "md": 3},
         value="All",
         label="Category",
         options=[ft.dropdown.Option(key="All", text="All")] + [
@@ -89,10 +89,11 @@ def my_codes_view(page: ft.Page) -> ft.View:
         label="Favorites only",
         value=False,
         label_style=ft.TextStyle(color=UI_TEXT_DARK, size=12),
+        col={"xs": 6, "sm": 4, "md": 2},
     )
 
     sort_dropdown = ft.Dropdown(
-        width=220,
+        col={"xs": 6, "sm": 4, "md": 3},
         value="created_at.desc",
         label="Sort by",
         options=[
@@ -209,6 +210,7 @@ def my_codes_view(page: ft.Page) -> ft.View:
             empty_card_builder=build_empty_results_card,
         )
     )
+    state.search_field.col = {"xs": 12, "sm": 8, "md": 4}
 
     def reset_button_click(_):
         filter_dropdown.value = "All"
@@ -237,6 +239,7 @@ def my_codes_view(page: ft.Page) -> ft.View:
     return ft.View(
         route=ROUTE,
         bgcolor=UI_PAGE_BG,
+        padding=0,
         controls=[
             ft.SafeArea(
                 ft.Container(
@@ -250,20 +253,16 @@ def my_codes_view(page: ft.Page) -> ft.View:
                                 weight=ft.FontWeight.W_600,
                                 color=UI_TEXT_DARK,
                             ),
-                            ft.Row(
+                            ft.ResponsiveRow(
                                 controls=[
-                                     ft.Container(
-                                        content=state.search_field,
-                                        expand=True,
-                                    ),
+                                    state.search_field,
                                     filter_dropdown,
                                     sort_dropdown,
                                     favorites_checkbox
                                 ],
-                              
-                               
                                 alignment=ft.MainAxisAlignment.START,
-                                spacing=5,
+                                spacing=8,
+                                run_spacing=8,
                             ),
                             
                             ft.Row(

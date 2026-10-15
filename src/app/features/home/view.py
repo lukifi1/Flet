@@ -27,6 +27,7 @@ from .actions import (
     handle_input_focus,
     save_qr_code,
     save_sequence,
+    sync_input_metadata
 )
 from .state import HomeState
 from app.core.sequence import SequencePlayer
@@ -62,7 +63,6 @@ def home_view(page: ft.Page):
     )
 
     category_dropdown = ft.Dropdown(
-        width=180,
         value="General",
         options=[ft.dropdown.Option(c) for c in QR_CODE_CATEGORIES],
         bgcolor=UI_INPUT_BG,
@@ -126,7 +126,6 @@ def home_view(page: ft.Page):
 
     play_button = ft.Button(
         "PLAY SEQUENCE",
-        width=150,
         height=44,
         color=UI_TEXT_LIGHT,
         bgcolor=UI_ACCENT,
@@ -137,7 +136,6 @@ def home_view(page: ft.Page):
 
     stop_button = ft.Button(
         "STOP",
-        width=96,
         height=44,
         color=UI_TEXT_MUTED,
         bgcolor=UI_INPUT_BG,
@@ -154,9 +152,17 @@ def home_view(page: ft.Page):
         alignment=ft.MainAxisAlignment.CENTER,
         spacing=8,
     )
+    play_button.expand = 2
+    stop_button.expand = 1
+
+    debug_text = ft.Text(
+        page.session.store.get("share_debug") or "",
+        size=12,
+        color=ft.Colors.RED_700,
+    )
 
     main_card = ft.Container(
-        width=360,
+        col={"xs": 12, "sm": 8, "md": 6, "lg": 4},
         bgcolor=UI_CARD_BG,
         border_radius=2,
         border=ft.Border.all(1, UI_BORDER),
@@ -186,6 +192,7 @@ def home_view(page: ft.Page):
                                 category_dropdown,
                             ],
                             spacing=0,
+                            expand=True,
                         ),
                         ft.Column(
                             [
@@ -203,28 +210,16 @@ def home_view(page: ft.Page):
                 _divider(),
                 ft.Container(height=14),
 
-                # Format
-                ft.Row(
-                    [
-                        ft.Column(
-                            [
-                                _label("FORMAT"),
-                                ft.Container(height=4),
-                                badge_type,
-                            ],
-                            spacing=0,
-                        ),
-                    ],
-                    alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-                ),
+                badge_type,
+                debug_text,
             ],
             spacing=0,
         ),
     )
 
-    generate_button.width = 150
-    save_button.width = 96
-    share_button.width = 96
+    generate_button.expand = 2
+    save_button.expand = 1
+    share_button.expand = 1
 
     buttons_row = ft.Row(
         [generate_button, save_button, share_button],
@@ -293,15 +288,31 @@ def home_view(page: ft.Page):
     stop_button.on_click = lambda e: sequence.stop(restore=True)
     save_button.on_click = on_save
     share_button.on_click = lambda e: asyncio.create_task(do_share_qrcode(state))
+    # ================== SHARE INTENT PREFILL ==================
+
+    page.home_state = state
+    page.share_status_control = debug_text
+    shared_text = getattr(page, "qr_input_text", None)
+
+    if shared_text and input_field.value != shared_text:
+        input_field.value = shared_text
+        sync_input_metadata(state)
+        try:
+            gen(page, state)
+        except Exception as exc:
+            debug_text.value = f"Shared file cannot fit in a QR code: {exc}"
+            log.warning("Unable to generate QR from shared data: %s", exc)
 
     # ================== VIEW ==================
     return ft.View(
         route="/",
         bgcolor=UI_PAGE_BG,
+        padding=0,
         controls=[
             ft.SafeArea(
                 ft.Container(
-                    padding=ft.Padding.symmetric(horizontal=20, vertical=24),
+                    expand=True,
+                    padding=ft.Padding.symmetric(horizontal=16, vertical=16),
                     content=ft.Column(
                         [
                             ft.Row(
@@ -311,18 +322,46 @@ def home_view(page: ft.Page):
                                 ],
                                 spacing=8,
                             ),
-                            ft.Container(height=20),
-                            main_card,
                             ft.Container(height=12),
-                            ft.Container(width=360, content=buttons_row),
+                            ft.ResponsiveRow(
+                                [main_card],
+                                alignment=ft.MainAxisAlignment.CENTER,
+                                spacing=0,
+                                run_spacing=0,
+                            ),
+                            ft.Container(height=12),
+                            ft.ResponsiveRow(
+                                [
+                                    ft.Container(
+                                        content=buttons_row,
+                                        col={"xs": 12, "sm": 8, "md": 6, "lg": 4},
+                                    )
+                                ],
+                                alignment=ft.MainAxisAlignment.CENTER,
+                                spacing=0,
+                                run_spacing=0,
+                            ),
                             ft.Container(height=8),
-                            ft.Container(width=360, content=sequence_row),
+                            ft.ResponsiveRow(
+                                [
+                                    ft.Container(
+                                        content=sequence_row,
+                                        col={"xs": 12, "sm": 8, "md": 6, "lg": 4},
+                                    )
+                                ],
+                                alignment=ft.MainAxisAlignment.CENTER,
+                                spacing=0,
+                                run_spacing=0,
+                            ),
                             ft.Container(height=6),
                             sequence_status,
                         ],
                         horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                        scroll=ft.ScrollMode.AUTO,
+                        expand=True,
                     ),
-                )
+                ),
+                expand=True,
             )
         ],
     )
