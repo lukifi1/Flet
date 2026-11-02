@@ -145,6 +145,7 @@ def home_view(page: ft.Page):
     )
 
     sequence_status = ft.Text("", size=16, color=UI_TEXT_DARK, text_align=ft.TextAlign.CENTER)
+    sequence_feedback = ft.Text("", size=14, color=UI_TEXT_MUTED, text_align=ft.TextAlign.CENTER)
     sequence_hint = ft.Text("", size=11, color=UI_TEXT_MUTED)
     sequence_image_side = max(
         200,
@@ -161,6 +162,16 @@ def home_view(page: ft.Page):
     async def stop_sequence(e=None):
         sequence.stop(restore=True)
         sequence_dialog.open = False
+        page.update()
+
+    def on_save_sequence(e=None):
+        result, message = save_sequence(page, state, sequence)
+        sequence_feedback.value = message
+        sequence_feedback.color = {
+            "success": ft.Colors.GREEN_700,
+            "duplicate": UI_ACCENT,
+            "error": ft.Colors.RED_700,
+        }[result]
         page.update()
 
     sequence_dialog = ft.AlertDialog(
@@ -184,8 +195,24 @@ def home_view(page: ft.Page):
                         vertical_alignment=ft.CrossAxisAlignment.CENTER,
                     ),
                     sequence_status,
+                    sequence_feedback,
                     ft.Container(content=sequence_img, expand=True, alignment=ft.Alignment.CENTER),
-                    ft.FilledButton("Sequenz stoppen", icon=ft.Icons.STOP, on_click=stop_sequence),
+                    ft.Row(
+                        [
+                            ft.FilledButton(
+                                "Sequenz speichern",
+                                icon=ft.Icons.SAVE,
+                                on_click=on_save_sequence,
+                            ),
+                            ft.FilledButton(
+                                "Sequenz stoppen",
+                                icon=ft.Icons.STOP,
+                                on_click=stop_sequence,
+                            ),
+                        ],
+                        alignment=ft.MainAxisAlignment.CENTER,
+                        spacing=8,
+                    ),
                 ],
                 expand=True,
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
@@ -324,6 +351,7 @@ def home_view(page: ft.Page):
             page.update()
             return
         sequence_hint.value = ""
+        sequence_feedback.value = ""
         save_button.disabled = False
         save_button.bgcolor = ft.Colors.BLACK
         sequence_dialog.open = True
@@ -334,7 +362,7 @@ def home_view(page: ft.Page):
 
     def on_save(e):
         if sequence.playing:
-            save_sequence(page, state, sequence)
+            on_save_sequence(e)
         else:
             save_qr_code(page, state)
 

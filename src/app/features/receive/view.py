@@ -1,4 +1,5 @@
 import asyncio
+import mimetypes
 
 import cv2
 import flet as ft
@@ -66,8 +67,19 @@ def receive_view(page: ft.Page) -> ft.View:
         ),
         disabled=True,
     )
+    open_button = ft.Button(
+        "In anderer App öffnen",
+        height=44,
+        color=UI_TEXT_LIGHT,
+        bgcolor=UI_ACCENT,
+        style=ft.ButtonStyle(
+            shape=ft.RoundedRectangleBorder(radius=UI_BUTTON_RADIUS),
+        ),
+        disabled=True,
+    )
     picker = ft.FilePicker()
     page.services.append(picker)
+    share = ft.Share()
 
     def refresh_progress():
         total = receiver.total or 0
@@ -81,6 +93,7 @@ def receive_view(page: ft.Page) -> ft.View:
         else:
             missing.value = ""
         save_button.disabled = not page.transfer_verified
+        open_button.disabled = not page.transfer_verified
 
     async def start_scan(_):
         await page.push_route("/receive/scan")
@@ -102,6 +115,28 @@ def receive_view(page: ft.Page) -> ft.View:
         except (IntegrityError, OSError) as exc:
             status.value = f"Speichern fehlgeschlagen: {exc}"
             page.update()
+
+    async def open_in_app(_):
+        if not receiver.is_complete or not page.transfer_verified:
+            return
+        try:
+            data = receiver.assemble()
+            filename = receiver.meta.filename.replace("\\", "/").split("/")[-1] or "empfangene-datei.bin"
+            mime_type = mimetypes.guess_type(filename)[0] or "application/octet-stream"
+            shared_file = ft.ShareFile.from_bytes(
+                data,
+                mime_type=mime_type,
+                name=filename,
+            )
+            await share.share_files(
+                [shared_file],
+                title="Datei öffnen mit",
+                text="Wähle eine App zum Öffnen der empfangenen Datei.",
+            )
+            status.value = "Wähle im Android-Menü Notizen oder eine andere passende App."
+        except Exception as exc:
+            status.value = f"Öffnen fehlgeschlagen: {exc}"
+        page.update()
 
     def reset(_):
         nonlocal receiver
@@ -126,6 +161,7 @@ def receive_view(page: ft.Page) -> ft.View:
     )
     start_button.disabled = page.transfer_verified
     save_button.on_click = save_file
+    open_button.on_click = open_in_app
 
     refresh_progress()
     return ft.View(
@@ -146,6 +182,13 @@ def receive_view(page: ft.Page) -> ft.View:
                             count,
                             status,
                             missing,
+                            open_button,
+                            ft.Text(
+                                "Öffnet die Android-App-Auswahl; Speichern ist optional.",
+                                size=12,
+                                color=UI_TEXT_MUTED,
+                                text_align=ft.TextAlign.CENTER,
+                            ),
                             save_button,
                             ft.TextButton("Empfang zurücksetzen", on_click=reset),
                             ft.Text("Technisches Limit: 50 MiB.", size=12, color=UI_TEXT_MUTED),

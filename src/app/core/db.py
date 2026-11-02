@@ -312,6 +312,32 @@ class QRCodeDatabase:
             return self._row_to_dict(row)
         return None
 
+    def find_saved_sequence(self, content_hash: str, data: str) -> Optional[int]:
+        """Return the ID of a matching saved sequence, including legacy rows."""
+        conn = self._get_connection()
+        try:
+            cursor = conn.cursor()
+            cursor.execute(
+                "SELECT id, data, metadata FROM qr_codes WHERE qr_type = ?",
+                ("Sequence",),
+            )
+            for row in cursor.fetchall():
+                if row["data"] == data:
+                    return int(row["id"])
+
+                metadata = row["metadata"]
+                if not metadata:
+                    continue
+                try:
+                    parsed_metadata = json.loads(metadata)
+                except (json.JSONDecodeError, TypeError):
+                    continue
+                if isinstance(parsed_metadata, dict) and parsed_metadata.get("content_sha256") == content_hash:
+                    return int(row["id"])
+            return None
+        finally:
+            conn.close()
+
     def get_all_qr_codes(
         self, limit: int = 100, offset: int = 0
     ) -> List[Dict[str, Any]]:

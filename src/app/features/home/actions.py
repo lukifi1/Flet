@@ -1,4 +1,5 @@
 import base64
+import hashlib
 
 import flet as ft
 
@@ -25,20 +26,29 @@ def show_snackbar(page: ft.Page, message: str):
 
 def save_sequence(page: ft.Page, state: HomeState, sequence):
     try:
-        qr_id = get_db().save_qr_code(
+        if not sequence.text or not sequence.first_image:
+            return "error", "Play a sequence before saving it"
+
+        content_hash = hashlib.sha256(sequence.text.encode("utf-8")).hexdigest()
+        db = get_db()
+        existing_id = db.find_saved_sequence(content_hash, sequence.text)
+        if existing_id is not None:
+            return "duplicate", f"This sequence is already saved (ID: {existing_id})"
+
+        qr_id = db.save_qr_code(
             data=sequence.text,
             qr_type="Sequence",
             ecc_level="M",
             binary_data=base64.b64decode(sequence.first_image),
-            metadata={"sequence": True},
+            metadata={"sequence": True, "content_sha256": content_hash},
             tags=["sequence"],
             category_name=state.category_dropdown.value or "General",
             is_favorite=bool(state.favorite_checkbox.data),
         )
-        show_snackbar(page, f"Sequence saved! (ID: {qr_id})")
+        return "success", f"Sequence saved successfully (ID: {qr_id})"
     except Exception as e:
         log.error(f"Error saving sequence: {e}")
-        show_snackbar(page, f"Error: {e}")
+        return "error", f"Could not save sequence: {e}"
 
 
 # ================== LOGIC (INPUT + QR GENERATION) ==================
