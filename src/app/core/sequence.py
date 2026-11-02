@@ -10,7 +10,7 @@ from app.core.transfer.chunker import DEFAULT_CHUNK_SIZE, build_frames
 
 log = get_logger(__name__)
 
-FPS = 5  # QR codes per second
+FPS = 2  # Each QR stays visible for 0.5 s to make scanning easier.
 
 
 def make_qr_image(frame):
@@ -24,11 +24,13 @@ def make_qr_image(frame):
 
 class SequencePlayer:
 
-    def __init__(self, img, status=None):
+    def __init__(self, img, status=None, display_size=(300, 300)):
         self.img = img
         self.status = status
+        self.display_size = display_size
         self.playing = False
         self.old_src = None
+        self.old_size = None
         self.text = ""
         self.first_image = None
         self.run_id = 0  # makes sure an old loop never keeps running next to a new one
@@ -45,12 +47,16 @@ class SequencePlayer:
             self._show_status("Enter some text first")
             return
 
-        frames = build_frames(text.encode("utf-8"), "text.txt", DEFAULT_CHUNK_SIZE)
+        # Keep text sequences aligned with the file transfer defaults.
+        frames = build_frames(text.encode("utf-8"), "text.txt", chunk_size=DEFAULT_CHUNK_SIZE)
         images = [make_qr_image(frame) for frame in frames]
 
         self.text = text
         self.first_image = images[0]
         self.old_src = self.img.src
+        self.old_size = (self.img.width, self.img.height)
+        if self.display_size is not None:
+            self.img.width, self.img.height = self.display_size
         self.run_id += 1
         run_id = self.run_id
         self.playing = True
@@ -78,4 +84,6 @@ class SequencePlayer:
         self.playing = False
         if restore and was_playing:
             self.img.src = self.old_src
+        if self.old_size is not None and self.display_size is not None:
+            self.img.width, self.img.height = self.old_size
             self.img.update()

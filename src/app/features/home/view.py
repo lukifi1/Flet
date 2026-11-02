@@ -144,8 +144,57 @@ def home_view(page: ft.Page):
         ),
     )
 
-    sequence_status = ft.Text("", size=11, color=UI_TEXT_MUTED)
-    sequence = SequencePlayer(img, sequence_status)
+    sequence_status = ft.Text("", size=16, color=UI_TEXT_DARK, text_align=ft.TextAlign.CENTER)
+    sequence_hint = ft.Text("", size=11, color=UI_TEXT_MUTED)
+    sequence_image_side = max(
+        200,
+        min((page.width or 360) - 24, (page.height or 700) - 160),
+    )
+    sequence_img = ft.Image(
+        src=QR_NO_DATA_IMAGE,
+        width=sequence_image_side,
+        height=sequence_image_side,
+        fit=ft.BoxFit.CONTAIN,
+    )
+    sequence = SequencePlayer(sequence_img, sequence_status, display_size=None)
+
+    async def stop_sequence(e=None):
+        sequence.stop(restore=True)
+        sequence_dialog.open = False
+        page.update()
+
+    sequence_dialog = ft.AlertDialog(
+        modal=True,
+        bgcolor=ft.Colors.WHITE,
+        inset_padding=ft.Padding.all(0),
+        content_padding=ft.Padding.all(0),
+        shape=ft.RoundedRectangleBorder(radius=0),
+        content=ft.Container(
+            width=page.width,
+            height=page.height,
+            padding=ft.Padding.symmetric(horizontal=12, vertical=12),
+            content=ft.Column(
+                [
+                    ft.Row(
+                        [
+                            ft.Text("QR-Sequenz", size=18, weight=ft.FontWeight.W_600, color=UI_TEXT_DARK),
+                            ft.Container(expand=True),
+                            ft.IconButton(icon=ft.Icons.CLOSE, tooltip="Sequenz stoppen", on_click=stop_sequence),
+                        ],
+                        vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                    ),
+                    sequence_status,
+                    ft.Container(content=sequence_img, expand=True, alignment=ft.Alignment.CENTER),
+                    ft.FilledButton("Sequenz stoppen", icon=ft.Icons.STOP, on_click=stop_sequence),
+                ],
+                expand=True,
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                spacing=8,
+            ),
+        ),
+    )
+    if sequence_dialog not in page.overlay:
+        page.overlay.append(sequence_dialog)
 
     sequence_row = ft.Row(
         [play_button, stop_button],
@@ -270,10 +319,17 @@ def home_view(page: ft.Page):
 
     async def on_play(e):
         text = input_field.value or ""
-        if text.strip():
-            save_button.disabled = False
-            save_button.bgcolor = ft.Colors.BLACK
+        if not text.strip():
+            sequence_hint.value = "Enter some text first"
             page.update()
+            return
+        sequence_hint.value = ""
+        save_button.disabled = False
+        save_button.bgcolor = ft.Colors.BLACK
+        sequence_dialog.open = True
+        page.update()
+        # Let the fullscreen dialog establish its layout before the first QR arrives.
+        await asyncio.sleep(0.15)
         await sequence.play(text)
 
     def on_save(e):
@@ -285,7 +341,7 @@ def home_view(page: ft.Page):
     input_field.on_change = on_input_change
     generate_button.on_click = on_generate
     play_button.on_click = on_play
-    stop_button.on_click = lambda e: sequence.stop(restore=True)
+    stop_button.on_click = stop_sequence
     save_button.on_click = on_save
     share_button.on_click = lambda e: asyncio.create_task(do_share_qrcode(state))
     # ================== SHARE INTENT PREFILL ==================
@@ -354,7 +410,7 @@ def home_view(page: ft.Page):
                                 run_spacing=0,
                             ),
                             ft.Container(height=6),
-                            sequence_status,
+                            sequence_hint,
                         ],
                         horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                         scroll=ft.ScrollMode.AUTO,

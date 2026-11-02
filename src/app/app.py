@@ -73,6 +73,11 @@ def main(page: ft.Page):
                 selected_icon=ft.Icon(ft.Icons.TERMINAL, color=UI_NAV_ICON_SELECTED),
                 label="Logs",
             ),
+            ft.NavigationBarDestination(
+                icon=ft.Icon(ft.Icons.CAMERA_ALT_OUTLINED, color=UI_NAV_ICON_UNSELECTED),
+                selected_icon=ft.Icon(ft.Icons.CAMERA_ALT, color=UI_NAV_ICON_SELECTED),
+                label="Empfangen",
+            ),
         ],
     )
 
@@ -95,8 +100,9 @@ def main(page: ft.Page):
             "/": 0,
             "/my-codes": 1,
             "/logs": 2,
+            "/receive": 3,
         }
-        target_index = route_to_index.get(route, 0)
+        target_index = route_to_index.get(route, 3 if route.startswith("/receive") else 0)
         if nav_bar.selected_index != target_index:
             syncing_nav_state = True
             nav_bar.selected_index = target_index
@@ -110,6 +116,7 @@ def main(page: ft.Page):
             0: "/",
             1: "/my-codes",
             2: "/logs",
+            3: "/receive",
         }
         target_route = index_to_route.get(nav_bar.selected_index, "/")
         if page.route != target_route:
@@ -167,7 +174,7 @@ def main(page: ft.Page):
     def render_current_route() -> None:
         try:
             current_view = build_view(page)
-            current_view.navigation_bar = nav_bar
+            current_view.navigation_bar = None if page.route == "/receive/scan" else nav_bar
             page.views.clear()
             page.views.append(current_view)
             set_nav_state(page.route)
