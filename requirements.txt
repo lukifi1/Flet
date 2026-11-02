@@ -3,6 +3,10 @@ qrcode[pil]>=7.4
 types-qrcode>=7.4
 pillow>=10.0
 certifi
+flet-camera
+flet-permission-handler
+numpy==2.4.6
+opencv-python==5.0.0.93
 #pytest>=7.0
 flet-cli
 flet-desktop 

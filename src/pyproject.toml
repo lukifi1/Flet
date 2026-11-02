@@ -1,0 +1,16 @@
+[project]
+name = "qr-maker"
+version = "0.1.0"
+requires-python = ">=3.13,<3.14"
+dependencies = [
+    "flet",
+    "qrcode[pil]>=7.4",
+    "certifi",
+    "flet-camera",
+    "flet-permission-handler",
+    "numpy==2.4.6",
+    "opencv-python==5.0.0.93",
+]
+
+[tool.flet.android.permission]
+"android.permission.CAMERA" = true

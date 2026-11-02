@@ -1,0 +1,9 @@
+# Runtime dependencies for builds whose Flet project directory is src/.
+# Flet reads this file when building from src/; declare every direct import here.
+flet
+qrcode[pil]>=7.4
+certifi
+flet-camera
+flet-permission-handler
+numpy==2.4.6
+opencv-python==5.0.0.93

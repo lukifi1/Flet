@@ -137,4 +137,5 @@ SPRINT1_COMPLETION_REPORT.md
 SPRINT1_DOCUMENTATION.md
 tmp/
 pyproject.toml
+!src/pyproject.toml
 *.log*
