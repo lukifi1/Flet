@@ -15,6 +15,7 @@ from app.core.constants import (
     UI_PAGE_BG,
     UI_PAGE_TRANSITION_ANIMATION,
 )
+from app.features.settings.widgets import is_settings_route
 from app.router import build_view
 from app.core.logger import get_logger
 from app.core.share_intent import consume_payloads, file_qr_data
@@ -174,7 +175,10 @@ def main(page: ft.Page):
     def render_current_route() -> None:
         try:
             current_view = build_view(page)
-            current_view.navigation_bar = None if page.route == "/receive/scan" else nav_bar
+            # No bottom bar on the fullscreen scanner or on the settings pages (they have a back arrow).
+            current_view.navigation_bar = (
+                None if page.route == "/receive/scan" or is_settings_route(page.route) else nav_bar
+            )
             page.views.clear()
             page.views.append(current_view)
             set_nav_state(page.route)

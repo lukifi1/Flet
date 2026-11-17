@@ -195,3 +195,17 @@ UI_NAV_TEXT_UNSELECTED = "#9A9A9A"
 UI_NAV_INDICATOR_BG = "#F0F0F2"
 
 UI_PAGE_TRANSITION_ANIMATION = ft.PageTransitionTheme.NONE
+
+# ====================================
+#       App Information
+# ====================================
+APP_NAME = "QR Maker"
+# Keep in sync with `version` in src/pyproject.toml (checked by tests/test_settings.py).
+APP_VERSION = "0.1.0"
+APP_CONTACT_EMAIL = "Lukasfink@gmail.com"
+APP_PUBLISHER_NAME = "Lukas Fink"
+
+# Highlight colours for legal text that still has to be filled in by the publisher.
+UI_PLACEHOLDER_BG = "#FFF4CC"
+UI_PLACEHOLDER_BORDER = "#E6C84F"
+UI_PLACEHOLDER_TEXT = "#6B5500"
